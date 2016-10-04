@@ -4,6 +4,7 @@
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Transformations;
 using OpenTK;
 using OpenTK.Graphics;
 using osu.Framework.Input;
@@ -22,34 +23,18 @@ namespace osu.Game.Graphics.UserInterface
             get { return count; }
             private set
             {
-                if (count != value)
+                if (count != value && IsCounting)
                 {
                     count = value;
-                    shadowEffect();
-                }
-            }
-        }
-
-        public void ResetCount() => Count = 0;
-
-        private bool isLit;
-        public bool IsLit
-        {
-            get { return isLit; }
-            protected set
-            {
-                if (isLit != value)
-                {
-                    isLit = value;
-                    if (value && IsCounting)
-                        Count++;
                 }
             }
         }
 
         public Color4 textColour { get; set; } = Color4.White;
+        public double ShadowFadeTime { get; set; } = 250;
+        public float BaseScale { get; set; } = 3.0f;
 
-        public double ShadowFadeTime { get; set; } = 250.0f;
+        public void ResetCount() => Count = 0;
 
         public override bool Contains(Vector2 position) => true;
         
@@ -63,41 +48,67 @@ namespace osu.Game.Graphics.UserInterface
                 {
                     Anchor = Anchor.BottomLeft,
                     Origin = Anchor.BottomLeft,
-                    Text = Count.ToString(@"#,0"),
+                    Text = Count.ToString(),
                     Colour = textColour,
-                    Scale = new Vector2(3.5f)
+                    Scale = new Vector2(BaseScale)
                 },
                 shadowText = new SpriteText
                 {
                     Anchor = Anchor.BottomLeft,
                     Origin = Anchor.BottomLeft,
-                    Text = Count.ToString(@"#,0"),
+                    Text = Count.ToString(),
                     Colour = textColour,
                     Alpha = 0,
-                    Scale = new Vector2(4.5f),
-                    Position = new Vector2(-0.5f, -1.5f)
+                    Scale = new Vector2(BaseScale),
+                    Position = new Vector2(-3.5f, -5.5f)
                 }
             };
         }
-        
-        private void shadowEffect()
+
+        public void NoteHit()
         {
-            countText.Scale = new Vector2(4.2f);
-            shadowText.Scale = new Vector2(5.2f);
+            if (isResetting)
+            {
+                isResetting = false;
+                Count = 0;
+            }
+
+            Count++;
+
+            countText.Scale = new Vector2(BaseScale * 1.1f);
+            shadowText.Scale = new Vector2(BaseScale * 1.6f);
+
             shadowText.Alpha = 0.4f;
             shadowText.Text = Count.ToString();
-            shadowText.FadeOut(ShadowFadeTime);
             countText.Text = Count.ToString();
-            countText.ScaleTo(new Vector2(3.5f), 200f);
-            shadowText.ScaleTo(new Vector2(4.5f), 200f);
+
+            shadowText.FadeOut(ShadowFadeTime);
+            countText.ScaleTo(new Vector2(BaseScale), 200);
+            shadowText.ScaleTo(new Vector2(BaseScale), 350, EasingTypes.InBounce);
         }
 
-        public bool NoteHit()
+        private bool isResetting = false;
+
+        public void NoteMiss()
         {
-            Count++;
-            return true;
-        }
+            isResetting = true;
 
-        protected override bool OnMouseDown(InputState state, MouseDownEventArgs args) => NoteHit();
+            countText.Scale = new Vector2(BaseScale * 1.1f);
+            shadowText.Scale = new Vector2(BaseScale * 1.3f);
+
+            for (int i = Count; i > 0; i--)
+            {
+                Count--;
+                shadowText.Text = Count.ToString();
+                countText.Text = Count.ToString();
+
+                if (!isResetting) break;
+
+                if (i == 1) isResetting = false;
+            }
+
+            countText.ScaleTo(new Vector2(BaseScale), 200);
+            shadowText.ScaleTo(new Vector2(BaseScale), 350, EasingTypes.InBounce);
+        }
     }
 }
