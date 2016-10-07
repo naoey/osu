@@ -34,10 +34,8 @@ namespace osu.Game.Graphics.UserInterface
         public double ShadowFadeTime { get; set; } = 250;
         public float BaseScale { get; set; } = 3.0f;
 
-        public void ResetCount() => Count = 0;
-
         public override bool Contains(Vector2 position) => true;
-        
+
         public override void Load()
         {
             base.Load();
@@ -60,49 +58,54 @@ namespace osu.Game.Graphics.UserInterface
                     Colour = textColour,
                     Alpha = 0,
                     Scale = new Vector2(BaseScale),
-                    Position = new Vector2(-3.5f, -5.5f)
+                    Position = new Vector2(-1.5f, -5.5f)
                 }
             };
         }
 
         public void NoteHit()
         {
-            if (isResetting)
-            {
-                isResetting = false;
-                Count = 0;
-            }
+            countText.ClearTransformations();
+            shadowText.ClearTransformations();
 
+            if (isResetting) isResetting = false;
+
+            countText.Text = Count.ToString();
             Count++;
+            shadowText.Text = Count.ToString();
 
             countText.Scale = new Vector2(BaseScale * 1.1f);
-            shadowText.Scale = new Vector2(BaseScale * 1.6f);
+            shadowText.Scale = new Vector2(BaseScale * 1.7f);
 
             shadowText.Alpha = 0.4f;
-            shadowText.Text = Count.ToString();
-            countText.Text = Count.ToString();
 
             shadowText.FadeOut(ShadowFadeTime);
-            countText.ScaleTo(new Vector2(BaseScale), 200);
-            shadowText.ScaleTo(new Vector2(BaseScale), 350, EasingTypes.InBounce);
+            countText.ScaleTo(new Vector2(BaseScale), 350);
+            shadowText.ScaleTo(new Vector2(BaseScale * 1.3f), 200, EasingTypes.InBounce);
         }
 
         private bool isResetting = false;
 
         public void NoteMiss()
         {
+            countText.ClearTransformations();
+            shadowText.ClearTransformations();
+
+            int rollingCount = Count;
+            Count = 0;
+
             isResetting = true;
 
             countText.Scale = new Vector2(BaseScale * 1.1f);
             shadowText.Scale = new Vector2(BaseScale * 1.3f);
 
-            for (int i = Count; i > 0; i--)
+            for (int i = rollingCount; i > 0; i--)
             {
-                Count--;
-                shadowText.Text = Count.ToString();
-                countText.Text = Count.ToString();
-
                 if (!isResetting) break;
+
+                rollingCount--;
+                shadowText.Text = rollingCount.ToString();
+                countText.Text = rollingCount.ToString();
 
                 if (i == 1) isResetting = false;
             }
