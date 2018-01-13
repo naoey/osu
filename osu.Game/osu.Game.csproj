@@ -269,6 +269,10 @@
     <Compile Include="Database\DatabaseContextFactory.cs" />
     <Compile Include="Database\IHasPrimaryKey.cs" />
     <Compile Include="Graphics\Textures\LargeTextureStore.cs" />
+    <Compile Include="Online\Chat\UserChannel.cs" />
+    <Compile Include="Overlays\Chat\ChannelTabControl.cs" />
+    <Compile Include="Overlays\Chat\ChatTabsArea.cs" />
+    <Compile Include="Overlays\Chat\UserTabControl.cs" />
     <Compile Include="Overlays\Profile\SupporterIcon.cs" />
     <Compile Include="Online\API\Requests\GetFriendsRequest.cs" />
     <Compile Include="Overlays\Settings\DangerousSettingsButton.cs" />

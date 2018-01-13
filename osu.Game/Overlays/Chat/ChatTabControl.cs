@@ -12,24 +12,24 @@ using osu.Framework.Input;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
-using osu.Game.Online.Chat;
 using OpenTK;
 using OpenTK.Graphics;
 using osu.Framework.Configuration;
 using System;
 using osu.Game.Graphics.Containers;
+using osu.Game.Users;
 
 namespace osu.Game.Overlays.Chat
 {
-    public class ChatTabControl : OsuTabControl<Channel>
+    public abstract class ChatTabControl<T> : OsuTabControl<T>
     {
         private const float shear_width = 10;
 
-        public Action<Channel> OnRequestLeave;
+        public Action<T> OnRequestLeave;
 
-        public readonly Bindable<bool> ChannelSelectorActive = new Bindable<bool>();
+        public readonly Bindable<bool> SelectorActive = new Bindable<bool>();
 
-        private readonly ChannelTabItem.ChannelSelectorTabItem selectorTab;
+        protected readonly ChatTabItem SelectorTab;
 
         public ChatTabControl()
         {
@@ -37,25 +37,17 @@ namespace osu.Game.Overlays.Chat
             TabContainer.Spacing = new Vector2(-shear_width, 0);
             TabContainer.Masking = false;
 
-            AddInternal(new SpriteIcon
-            {
-                Icon = FontAwesome.fa_comments,
-                Anchor = Anchor.CentreLeft,
-                Origin = Anchor.CentreLeft,
-                Size = new Vector2(20),
-                Margin = new MarginPadding(10),
-            });
+            // TODO: remove these virtual calls from constructor
+            AddTabItem(SelectorTab = CreateSelectorTab());
 
-            AddTabItem(selectorTab = new ChannelTabItem.ChannelSelectorTabItem(new Channel { Name = "+" }));
-
-            ChannelSelectorActive.BindTo(selectorTab.Active);
+            SelectorActive.BindTo(SelectorTab.Active);
         }
 
-        protected override void AddTabItem(TabItem<Channel> item, bool addToDropdown = true)
+        protected override void AddTabItem(TabItem<T> item, bool addToDropdown = true)
         {
-            if (selectorTab.Depth < float.MaxValue)
-                // performTabSort might've made selectorTab's position wonky, fix it
-                TabContainer.ChangeChildDepth(selectorTab, float.MaxValue);
+            if (SelectorTab.Depth < float.MaxValue)
+                // performTabSort might've made SelectorTab's position wonky, fix it
+                TabContainer.ChangeChildDepth(SelectorTab, float.MaxValue);
 
             base.AddTabItem(item, addToDropdown);
 
@@ -63,52 +55,56 @@ namespace osu.Game.Overlays.Chat
                 SelectTab(item);
         }
 
-        protected override TabItem<Channel> CreateTabItem(Channel value) => new ChannelTabItem(value) { OnRequestClose = tabCloseRequested };
+        protected override TabItem<T> CreateTabItem(T value) => new ChatTabItem(value) { OnRequestClose = tabCloseRequested };
 
-        protected override void SelectTab(TabItem<Channel> tab)
+        protected abstract ChatTabItem CreateSelectorTab();
+
+        protected override void SelectTab(TabItem<T> tab)
         {
-            if (tab is ChannelTabItem.ChannelSelectorTabItem)
+            if (tab == SelectorTab)
             {
                 tab.Active.Toggle();
                 return;
             }
 
-            selectorTab.Active.Value = false;
+            SelectorTab.Active.Value = false;
 
             base.SelectTab(tab);
         }
 
-        private void tabCloseRequested(TabItem<Channel> tab)
+        private void tabCloseRequested(TabItem<T> tab)
         {
-            int totalTabs = TabContainer.Count - 1; // account for selectorTab
+            int totalTabs = TabContainer.Count - 1; // account for SelectorTab
             int currentIndex = MathHelper.Clamp(TabContainer.IndexOf(tab), 1, totalTabs);
 
             if (tab == SelectedTab && totalTabs > 1)
                 // Select the tab after tab-to-be-removed's index, or the tab before if current == last
                 SelectTab(TabContainer[currentIndex == totalTabs ? currentIndex - 1 : currentIndex + 1]);
-            else if (totalTabs == 1 && !selectorTab.Active)
+            else if (totalTabs == 1 && !SelectorTab.Active)
                 // Open channel selection overlay if all channel tabs will be closed after removing this tab
-                SelectTab(selectorTab);
+                SelectTab(SelectorTab);
 
             OnRequestLeave?.Invoke(tab.Value);
         }
 
-        private class ChannelTabItem : TabItem<Channel>
+        protected class ChatTabItem : TabItem<T>
         {
-            private Color4 backgroundInactive;
-            private Color4 backgroundHover;
-            private Color4 backgroundActive;
+            protected Color4 BackgroundInactive;
+            protected Color4 BackgroundHover;
+            protected Color4 BackgroundActive;
+            protected UpdateableAvatar Avatar; // eventually channels may have some kind avatar too? (teams etc.)
 
             public override bool IsRemovable => !Pinned;
 
-            private readonly SpriteText text;
-            private readonly SpriteText textBold;
             private readonly ClickableContainer closeButton;
-            private readonly Box box;
-            private readonly Box highlightBox;
-            private readonly SpriteIcon icon;
 
-            public Action<ChannelTabItem> OnRequestClose;
+            protected readonly SpriteText Text;
+            protected readonly SpriteText TextBold;
+            protected readonly Box Box;
+            protected readonly Box HighlightBox;
+            protected readonly SpriteIcon Icon;
+
+            public Action<ChatTabItem> OnRequestClose;
 
             private void updateState()
             {
@@ -124,22 +120,22 @@ namespace osu.Game.Overlays.Chat
             {
                 this.ResizeTo(new Vector2(Width, 1.1f), transition_length, Easing.OutQuint);
 
-                box.FadeColour(backgroundActive, transition_length, Easing.OutQuint);
-                highlightBox.FadeIn(transition_length, Easing.OutQuint);
+                Box.FadeColour(BackgroundActive, transition_length, Easing.OutQuint);
+                HighlightBox.FadeIn(transition_length, Easing.OutQuint);
 
-                text.FadeOut(transition_length, Easing.OutQuint);
-                textBold.FadeIn(transition_length, Easing.OutQuint);
+                Text.FadeOut(transition_length, Easing.OutQuint);
+                TextBold.FadeIn(transition_length, Easing.OutQuint);
             }
 
             private void fadeInactive()
             {
                 this.ResizeTo(new Vector2(Width, 1), transition_length, Easing.OutQuint);
 
-                box.FadeColour(backgroundInactive, transition_length, Easing.OutQuint);
-                highlightBox.FadeOut(transition_length, Easing.OutQuint);
+                Box.FadeColour(BackgroundInactive, transition_length, Easing.OutQuint);
+                HighlightBox.FadeOut(transition_length, Easing.OutQuint);
 
-                text.FadeIn(transition_length, Easing.OutQuint);
-                textBold.FadeOut(transition_length, Easing.OutQuint);
+                Text.FadeIn(transition_length, Easing.OutQuint);
+                TextBold.FadeOut(transition_length, Easing.OutQuint);
             }
 
             protected override bool OnHover(InputState state)
@@ -148,7 +144,7 @@ namespace osu.Game.Overlays.Chat
                     closeButton.FadeIn(200, Easing.OutQuint);
 
                 if (!Active)
-                    box.FadeColour(backgroundHover, transition_length, Easing.OutQuint);
+                    Box.FadeColour(BackgroundHover, transition_length, Easing.OutQuint);
                 return true;
             }
 
@@ -161,11 +157,11 @@ namespace osu.Game.Overlays.Chat
             [BackgroundDependencyLoader]
             private void load(OsuColour colours)
             {
-                backgroundActive = colours.ChatBlue;
-                backgroundInactive = colours.Gray4;
-                backgroundHover = colours.Gray7;
+                BackgroundActive = colours.ChatBlue;
+                BackgroundInactive = colours.Gray4;
+                BackgroundHover = colours.Gray7;
 
-                highlightBox.Colour = colours.Yellow;
+                HighlightBox.Colour = colours.Yellow;
             }
 
             protected override void LoadComplete()
@@ -175,7 +171,7 @@ namespace osu.Game.Overlays.Chat
                 updateState();
             }
 
-            public ChannelTabItem(Channel value) : base(value)
+            public ChatTabItem(T value) : base(value)
             {
                 Width = 150;
 
@@ -196,12 +192,12 @@ namespace osu.Game.Overlays.Chat
 
                 Children = new Drawable[]
                 {
-                    box = new Box
+                    Box = new Box
                     {
                         EdgeSmoothness = new Vector2(1, 0),
                         RelativeSizeAxes = Axes.Both,
                     },
-                    highlightBox = new Box
+                    HighlightBox = new Box
                     {
                         Width = 5,
                         Alpha = 0,
@@ -216,7 +212,7 @@ namespace osu.Game.Overlays.Chat
                         RelativeSizeAxes = Axes.Both,
                         Children = new Drawable[]
                         {
-                            icon = new SpriteIcon
+                            Icon = new SpriteIcon
                             {
                                 Icon = FontAwesome.fa_hashtag,
                                 Anchor = Anchor.CentreLeft,
@@ -226,7 +222,7 @@ namespace osu.Game.Overlays.Chat
                                 Alpha = 0.2f,
                                 Size = new Vector2(ChatOverlay.TAB_AREA_HEIGHT),
                             },
-                            text = new OsuSpriteText
+                            Text = new OsuSpriteText
                             {
                                 Margin = new MarginPadding(5),
                                 Origin = Anchor.CentreLeft,
@@ -234,7 +230,7 @@ namespace osu.Game.Overlays.Chat
                                 Text = value.ToString(),
                                 TextSize = 18,
                             },
-                            textBold = new OsuSpriteText
+                            TextBold = new OsuSpriteText
                             {
                                 Alpha = 0,
                                 Margin = new MarginPadding(5),
@@ -260,7 +256,7 @@ namespace osu.Game.Overlays.Chat
                 };
             }
 
-            public class CloseButton : OsuClickableContainer
+            private class CloseButton : OsuClickableContainer
             {
                 private readonly SpriteIcon icon;
 
@@ -300,29 +296,6 @@ namespace osu.Game.Overlays.Chat
                 {
                     icon.FadeColour(Color4.White, 200, Easing.OutQuint);
                     base.OnHoverLost(state);
-                }
-            }
-
-            public class ChannelSelectorTabItem : ChannelTabItem
-            {
-                public override bool IsRemovable => false;
-
-                public ChannelSelectorTabItem(Channel value) : base(value)
-                {
-                    Depth = float.MaxValue;
-                    Width = 45;
-
-                    icon.Alpha = 0;
-
-                    text.TextSize = 45;
-                    textBold.TextSize = 45;
-                }
-
-                [BackgroundDependencyLoader]
-                private new void load(OsuColour colour)
-                {
-                    backgroundInactive = colour.Gray2;
-                    backgroundActive = colour.Gray3;
                 }
             }
 

@@ -51,7 +51,7 @@ namespace osu.Game.Overlays
 
         private GetMessagesRequest fetchReq;
 
-        private readonly ChatTabControl channelTabs;
+        private readonly ChannelTabControl channelTabs;
 
         private readonly Container chatContainer;
         private readonly Container tabsArea;
@@ -147,6 +147,10 @@ namespace osu.Game.Overlays
                                 loading = new LoadingAnimation(),
                             }
                         },
+//                        tabsArea = new ChatTabsArea
+//                        {
+//                            Height = TAB_AREA_HEIGHT,
+//                        },
                         tabsArea = new Container
                         {
                             Name = @"tabs area",
@@ -159,7 +163,7 @@ namespace osu.Game.Overlays
                                     RelativeSizeAxes = Axes.Both,
                                     Colour = Color4.Black,
                                 },
-                                channelTabs = new ChatTabControl
+                                channelTabs = new ChannelTabControl
                                 {
                                     RelativeSizeAxes = Axes.Both,
                                     OnRequestLeave = removeChannel,
@@ -171,10 +175,10 @@ namespace osu.Game.Overlays
             };
 
             channelTabs.Current.ValueChanged += newChannel => CurrentChannel = newChannel;
-            channelTabs.ChannelSelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
+            channelTabs.SelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
             channelSelection.StateChanged += state =>
             {
-                channelTabs.ChannelSelectorActive.Value = state == Visibility.Visible;
+                channelTabs.SelectorActive.Value = state == Visibility.Visible;
 
                 if (state == Visibility.Visible)
                 {
