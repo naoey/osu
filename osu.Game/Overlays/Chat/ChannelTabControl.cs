@@ -23,22 +23,11 @@ namespace osu.Game.Overlays.Chat
             });
         }
 
-        protected override ChatTabItem CreateSelectorTab() => new ChannelSelectorTabItem(new Channel { Name = "+" });
+        protected override ChatTabItem CreateSelectorTab() => new ChannelSelectorTabItem(new Channel());
 
-        protected class ChannelSelectorTabItem : ChatTabItem
+        protected class ChannelSelectorTabItem : SelectorTabItem
         {
-            public override bool IsRemovable => false;
-
-            public ChannelSelectorTabItem(Channel value) : base(value)
-            {
-                Depth = float.MaxValue;
-                Width = 45;
-
-                Icon.Alpha = 0;
-
-                Text.TextSize = 45;
-                TextBold.TextSize = 45;
-            }
+            public ChannelSelectorTabItem(Channel value) : base(value) { }
 
             [BackgroundDependencyLoader]
             private new void load(OsuColour colour)
@@ -46,6 +35,15 @@ namespace osu.Game.Overlays.Chat
                 BackgroundInactive = colour.Gray2;
                 BackgroundActive = colour.Gray3;
             }
+
+            protected override SpriteIcon CreateSelectorIcon() => new SpriteIcon
+            {
+                Icon = FontAwesome.fa_plus,
+                Size = new Vector2(20),
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Shear = -Shear,
+            };
         }
     }
 }

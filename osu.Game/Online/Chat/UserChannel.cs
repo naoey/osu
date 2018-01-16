@@ -9,6 +9,6 @@ namespace osu.Game.Online.Chat
     {
         public User User { get; set; }
 
-        public override string ToString() => User.Username;
+        public override string ToString() => User?.Username ?? string.Empty;
     }
 }

@@ -16,6 +16,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using osu.Framework.Configuration;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using osu.Game.Graphics.Containers;
 using osu.Game.Users;
 
@@ -28,6 +30,8 @@ namespace osu.Game.Overlays.Chat
         public Action<T> OnRequestLeave;
 
         public readonly Bindable<bool> SelectorActive = new Bindable<bool>();
+
+        public IEnumerable<T> OpenTabs => TabContainer.Children.Select(c => c.Value);
 
         protected readonly ChatTabItem SelectorTab;
 
@@ -55,7 +59,7 @@ namespace osu.Game.Overlays.Chat
                 SelectTab(item);
         }
 
-        protected override TabItem<T> CreateTabItem(T value) => new ChatTabItem(value) { OnRequestClose = tabCloseRequested };
+        protected override TabItem<T> CreateTabItem(T value) => new ChatTabItem(value) { OnRequestClose = TabCloseRequested };
 
         protected abstract ChatTabItem CreateSelectorTab();
 
@@ -72,7 +76,7 @@ namespace osu.Game.Overlays.Chat
             base.SelectTab(tab);
         }
 
-        private void tabCloseRequested(TabItem<T> tab)
+        protected void TabCloseRequested(TabItem<T> tab)
         {
             int totalTabs = TabContainer.Count - 1; // account for SelectorTab
             int currentIndex = MathHelper.Clamp(TabContainer.IndexOf(tab), 1, totalTabs);
@@ -92,7 +96,6 @@ namespace osu.Game.Overlays.Chat
             protected Color4 BackgroundInactive;
             protected Color4 BackgroundHover;
             protected Color4 BackgroundActive;
-            protected UpdateableAvatar Avatar; // eventually channels may have some kind avatar too? (teams etc.)
 
             public override bool IsRemovable => !Pinned;
 
@@ -103,39 +106,42 @@ namespace osu.Game.Overlays.Chat
             protected readonly Box Box;
             protected readonly Box HighlightBox;
             protected readonly SpriteIcon Icon;
+            protected readonly Container ContentContainer;
+
+            protected virtual FontAwesome BackgroundIcon => FontAwesome.fa_hashtag;
 
             public Action<ChatTabItem> OnRequestClose;
 
             private void updateState()
             {
                 if (Active)
-                    fadeActive();
+                    FadeActive();
                 else
-                    fadeInactive();
+                    FadeInactive();
             }
 
-            private const float transition_length = 400;
+            protected const float TRANSITION_LENGTH = 400;
 
-            private void fadeActive()
+            protected virtual void FadeActive()
             {
-                this.ResizeTo(new Vector2(Width, 1.1f), transition_length, Easing.OutQuint);
+                this.ResizeTo(new Vector2(Width, 1.1f), TRANSITION_LENGTH, Easing.OutQuint);
 
-                Box.FadeColour(BackgroundActive, transition_length, Easing.OutQuint);
-                HighlightBox.FadeIn(transition_length, Easing.OutQuint);
+                Box.FadeColour(BackgroundActive, TRANSITION_LENGTH, Easing.OutQuint);
+                HighlightBox.FadeIn(TRANSITION_LENGTH, Easing.OutQuint);
 
-                Text.FadeOut(transition_length, Easing.OutQuint);
-                TextBold.FadeIn(transition_length, Easing.OutQuint);
+                Text.FadeOut(TRANSITION_LENGTH, Easing.OutQuint);
+                TextBold.FadeIn(TRANSITION_LENGTH, Easing.OutQuint);
             }
 
-            private void fadeInactive()
+            protected virtual void FadeInactive()
             {
-                this.ResizeTo(new Vector2(Width, 1), transition_length, Easing.OutQuint);
+                this.ResizeTo(new Vector2(Width, 1), TRANSITION_LENGTH, Easing.OutQuint);
 
-                Box.FadeColour(BackgroundInactive, transition_length, Easing.OutQuint);
-                HighlightBox.FadeOut(transition_length, Easing.OutQuint);
+                Box.FadeColour(BackgroundInactive, TRANSITION_LENGTH, Easing.OutQuint);
+                HighlightBox.FadeOut(TRANSITION_LENGTH, Easing.OutQuint);
 
-                Text.FadeIn(transition_length, Easing.OutQuint);
-                TextBold.FadeOut(transition_length, Easing.OutQuint);
+                Text.FadeIn(TRANSITION_LENGTH, Easing.OutQuint);
+                TextBold.FadeOut(TRANSITION_LENGTH, Easing.OutQuint);
             }
 
             protected override bool OnHover(InputState state)
@@ -144,7 +150,7 @@ namespace osu.Game.Overlays.Chat
                     closeButton.FadeIn(200, Easing.OutQuint);
 
                 if (!Active)
-                    Box.FadeColour(BackgroundHover, transition_length, Easing.OutQuint);
+                    Box.FadeColour(BackgroundHover, TRANSITION_LENGTH, Easing.OutQuint);
                 return true;
             }
 
@@ -206,7 +212,7 @@ namespace osu.Game.Overlays.Chat
                         EdgeSmoothness = new Vector2(1, 0),
                         RelativeSizeAxes = Axes.Y,
                     },
-                    new Container
+                    ContentContainer = new Container
                     {
                         Shear = new Vector2(-shear_width / ChatOverlay.TAB_AREA_HEIGHT, 0),
                         RelativeSizeAxes = Axes.Both,
@@ -214,7 +220,7 @@ namespace osu.Game.Overlays.Chat
                         {
                             Icon = new SpriteIcon
                             {
-                                Icon = FontAwesome.fa_hashtag,
+                                Icon = BackgroundIcon,
                                 Anchor = Anchor.CentreLeft,
                                 Origin = Anchor.CentreLeft,
                                 Colour = Color4.Black,
@@ -302,6 +308,24 @@ namespace osu.Game.Overlays.Chat
             protected override void OnActivated() => updateState();
 
             protected override void OnDeactivated() => updateState();
+        }
+
+        protected abstract class SelectorTabItem : ChatTabItem
+        {
+            public override bool IsRemovable => false;
+
+            protected SelectorTabItem(T value)
+                : base(value)
+            {
+                Depth = float.MaxValue;
+                Width = 45;
+
+                Icon.Alpha = Text.Alpha = TextBold.Alpha = 0;
+
+                AddInternal(CreateSelectorIcon());
+            }
+
+            protected abstract SpriteIcon CreateSelectorIcon();
         }
     }
 }

@@ -51,10 +51,9 @@ namespace osu.Game.Overlays
 
         private GetMessagesRequest fetchReq;
 
-        private readonly ChannelTabControl channelTabs;
+        private readonly ChatTabsArea tabsArea;
 
         private readonly Container chatContainer;
-        private readonly Container tabsArea;
         private readonly Box chatBackground;
         private readonly Box tabBackground;
 
@@ -147,38 +146,39 @@ namespace osu.Game.Overlays
                                 loading = new LoadingAnimation(),
                             }
                         },
-//                        tabsArea = new ChatTabsArea
-//                        {
-//                            Height = TAB_AREA_HEIGHT,
-//                        },
-                        tabsArea = new Container
+                        tabsArea = new ChatTabsArea
                         {
-                            Name = @"tabs area",
-                            RelativeSizeAxes = Axes.X,
                             Height = TAB_AREA_HEIGHT,
-                            Children = new Drawable[]
-                            {
-                                tabBackground = new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Color4.Black,
-                                },
-                                channelTabs = new ChannelTabControl
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    OnRequestLeave = removeChannel,
-                                },
-                            }
                         },
+//                        tabsArea = new Container
+//                        {
+//                            Name = @"tabs area",
+//                            RelativeSizeAxes = Axes.X,
+//                            Height = TAB_AREA_HEIGHT,
+//                            Children = new Drawable[]
+//                            {
+//                                tabBackground = new Box
+//                                {
+//                                    RelativeSizeAxes = Axes.Both,
+//                                    Colour = Color4.Black,
+//                                },
+//                                channelTabs = new ChannelTabControl
+//                                {
+//                                    RelativeSizeAxes = Axes.Both,
+//                                    OnRequestLeave = removeChannel,
+//                                },
+//                            }
+//                        },
                     },
                 },
             };
 
-            channelTabs.Current.ValueChanged += newChannel => CurrentChannel = newChannel;
-            channelTabs.SelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
+            tabsArea.ChannelTabs.OnRequestLeave = removeChannel;
+            tabsArea.ChannelTabs.Current.ValueChanged += newChannel => CurrentChannel = newChannel;
+            tabsArea.ChannelTabs.SelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
             channelSelection.StateChanged += state =>
             {
-                channelTabs.SelectorActive.Value = state == Visibility.Visible;
+                tabsArea.ChannelTabs.SelectorActive.Value = state == Visibility.Visible;
 
                 if (state == Visibility.Visible)
                 {
@@ -280,7 +280,7 @@ namespace osu.Game.Overlays
             {
                 chatContainer.Height = (float)h;
                 channelSelectionContainer.Height = 1f - (float)h;
-                tabBackground.FadeTo(h == 1 ? 1 : 0.8f, 200);
+                tabsArea.Background.FadeTo(h == 1 ? 1 : 0.8f, 200);
             };
             ChatHeight.TriggerChange();
 
@@ -350,7 +350,7 @@ namespace osu.Game.Overlays
                 currentChannel = value;
 
                 textbox.Current.Disabled = currentChannel.ReadOnly;
-                channelTabs.Current.Value = value;
+                tabsArea.ChannelTabs.Current.Value = value;
 
                 var loaded = loadedChannels.Find(d => d.Channel == value);
                 if (loaded == null)
@@ -392,7 +392,7 @@ namespace osu.Game.Overlays
             else
             {
                 careChannels.Add(channel);
-                channelTabs.AddItem(channel);
+                tabsArea.ChannelTabs.AddItem(channel);
             }
 
             // let's fetch a small number of messages to bring us up-to-date with the backlog.
@@ -412,7 +412,7 @@ namespace osu.Game.Overlays
 
             careChannels.Remove(channel);
             loadedChannels.Remove(loadedChannels.Find(c => c.Channel == channel));
-            channelTabs.RemoveItem(channel);
+            tabsArea.ChannelTabs.RemoveItem(channel);
 
             channel.Joined.Value = false;
         }
