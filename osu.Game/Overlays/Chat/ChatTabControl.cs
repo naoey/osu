@@ -49,7 +49,7 @@ namespace osu.Game.Overlays.Chat
 
         protected override void AddTabItem(TabItem<T> item, bool addToDropdown = true)
         {
-            if (SelectorTab.Depth < float.MaxValue)
+            if (SelectorTab.Depth != float.MaxValue)
                 // performTabSort might've made SelectorTab's position wonky, fix it
                 TabContainer.ChangeChildDepth(SelectorTab, float.MaxValue);
 
@@ -181,10 +181,10 @@ namespace osu.Game.Overlays.Chat
             {
                 Width = 150;
 
-                RelativeSizeAxes = Axes.Y;
+                Anchor = Anchor.BottomRight;
+                Origin = Anchor.BottomRight;
 
-                Anchor = Anchor.BottomLeft;
-                Origin = Anchor.BottomLeft;
+                RelativeSizeAxes = Axes.Y;
 
                 Shear = new Vector2(shear_width / ChatOverlay.TAB_AREA_HEIGHT, 0);
 

@@ -4,6 +4,7 @@
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Game.Online.Chat;
 using OpenTK;
 using OpenTK.Graphics;
 
@@ -29,13 +30,15 @@ namespace osu.Game.Overlays.Chat
                 },
                 ChannelTabs = new ChannelTabControl
                 {
-                    Width = 0.5f,
+                    Size = new Vector2(0.5f, 1f),
                     RelativeSizeAxes = Axes.Both,
                 },
                 UserTabs = new UserTabControl
                 {
-                    Width = 0.5f,
+                    Size = new Vector2(0.5f, 1f),
                     RelativeSizeAxes = Axes.Both,
+                    Anchor = Anchor.TopRight,
+                    Origin = Anchor.TopRight,
                 },
             };
         }

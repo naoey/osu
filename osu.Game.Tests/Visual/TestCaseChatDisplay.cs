@@ -41,15 +41,16 @@ namespace osu.Game.Tests.Visual
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 Height = 50f,
+                Alpha = 0,
             });
 
             area.ChannelTabs.OnRequestLeave += removeChannelTabItem;
             area.UserTabs.OnRequestLeave += removeUserTabItem;
 
-            AddStep("Add channel tab item", addChannelTabItem);
-            AddStep("Add user tab item", addUserTabItem);
             AddStep("Toggle ChatTabsArea", () => area.Alpha = area.Alpha = 1 - area.Alpha);
             AddStep("Toggle ChatOverlay", () => overlay.ToggleVisibility());
+            AddStep("Add channel tab item", addChannelTabItem);
+            AddStep("Add user tab item", addUserTabItem);
         }
 
         private void addChannelTabItem() => area.ChannelTabs.AddItem(new Channel

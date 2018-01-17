@@ -18,9 +18,6 @@ namespace osu.Game.Overlays.Chat
     {
         public UserTabControl()
         {
-            Anchor = Anchor.TopRight;
-            Origin = Anchor.TopRight;
-
             TabContainer.Anchor = Anchor.TopRight;
             TabContainer.Origin = Anchor.TopRight;
         }
@@ -36,6 +33,9 @@ namespace osu.Game.Overlays.Chat
             public UserTabItem(UserChannel value)
                 : base(value)
             {
+                Anchor = Anchor.BottomRight;
+                Origin = Anchor.BottomRight;
+
                 ContentContainer.Add(new Avatar(Value.User)
                 {
                     Width = 40,
@@ -91,6 +91,8 @@ namespace osu.Game.Overlays.Chat
             public UserSelectorTabItem(UserChannel value)
                 : base(value)
             {
+                Anchor = Anchor.BottomRight;
+                Origin = Anchor.BottomRight;
             }
 
             [BackgroundDependencyLoader]

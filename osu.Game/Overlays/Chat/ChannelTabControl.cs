@@ -3,6 +3,7 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics;
 using osu.Game.Online.Chat;
 using OpenTK;
@@ -25,9 +26,26 @@ namespace osu.Game.Overlays.Chat
 
         protected override ChatTabItem CreateSelectorTab() => new ChannelSelectorTabItem(new Channel());
 
+        protected override TabItem<Channel> CreateTabItem(Channel value) => new ChannelTabItem(value);
+
+        protected class ChannelTabItem : ChatTabItem
+        {
+            public ChannelTabItem(Channel value)
+                : base(value)
+            {
+                Anchor = Anchor.BottomLeft;
+                Origin = Anchor.BottomLeft;
+            }
+        }
+
         protected class ChannelSelectorTabItem : SelectorTabItem
         {
-            public ChannelSelectorTabItem(Channel value) : base(value) { }
+            public ChannelSelectorTabItem(Channel value)
+                : base(value)
+            {
+                Anchor = Anchor.BottomLeft;
+                Origin = Anchor.BottomLeft;
+            }
 
             [BackgroundDependencyLoader]
             private new void load(OsuColour colour)
