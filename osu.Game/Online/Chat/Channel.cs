@@ -10,7 +10,7 @@ using osu.Framework.Lists;
 
 namespace osu.Game.Online.Chat
 {
-    public class Channel
+    public class Channel : IEquatable<Channel>
     {
         [JsonProperty(@"name")]
         public string Name;
@@ -22,7 +22,7 @@ namespace osu.Game.Online.Chat
         public string Type;
 
         [JsonProperty(@"channel_id")]
-        public int Id;
+        public long Id;
 
         public readonly SortedList<Message> Messages = new SortedList<Message>(Comparer<Message>.Default);
 
@@ -99,6 +99,8 @@ namespace osu.Game.Online.Chat
             Messages.Add(final);
             PendingMessageResolved?.Invoke(echo, final);
         }
+
+        public virtual bool Equals(Channel other) => Id == other?.Id;
 
         public override string ToString() => Name;
     }

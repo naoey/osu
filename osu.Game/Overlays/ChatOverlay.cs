@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTK;
-using OpenTK.Graphics;
 using osu.Framework.Allocation;
 using osu.Framework.Configuration;
 using osu.Framework.Graphics;
@@ -25,6 +24,7 @@ using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.Chat;
 using osu.Game.Overlays.Chat;
+using osu.Game.Users;
 
 namespace osu.Game.Overlays
 {
@@ -50,6 +50,7 @@ namespace osu.Game.Overlays
         public const float TAB_AREA_HEIGHT = 50;
 
         private GetMessagesRequest fetchReq;
+        private GetPrivateMessagesRequest privateFetchReq;
 
         private readonly ChatTabsArea tabsArea;
 
@@ -150,32 +151,14 @@ namespace osu.Game.Overlays
                         {
                             Height = TAB_AREA_HEIGHT,
                         },
-//                        tabsArea = new Container
-//                        {
-//                            Name = @"tabs area",
-//                            RelativeSizeAxes = Axes.X,
-//                            Height = TAB_AREA_HEIGHT,
-//                            Children = new Drawable[]
-//                            {
-//                                tabBackground = new Box
-//                                {
-//                                    RelativeSizeAxes = Axes.Both,
-//                                    Colour = Color4.Black,
-//                                },
-//                                channelTabs = new ChannelTabControl
-//                                {
-//                                    RelativeSizeAxes = Axes.Both,
-//                                    OnRequestLeave = removeChannel,
-//                                },
-//                            }
-//                        },
                     },
                 },
             };
 
-            tabsArea.ChannelTabs.OnRequestLeave = removeChannel;
-            tabsArea.ChannelTabs.Current.ValueChanged += newChannel => CurrentChannel = newChannel;
-            tabsArea.ChannelTabs.SelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
+            tabsArea.OnRequestLeave = removeChannel;
+            tabsArea.CurrentChannel.ValueChanged += newChannel => CurrentChannel = newChannel;
+            tabsArea.ChannelSelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
+
             channelSelection.StateChanged += state =>
             {
                 tabsArea.ChannelTabs.SelectorActive.Value = state == Visibility.Visible;
@@ -242,6 +225,9 @@ namespace osu.Game.Overlays
             }
         }
 
+        // TODO: update all UserChannels with new LocalUser if it changes
+        public void StartUserChat(User user) => addChannel(new UserChannel(user, api.LocalUser.Value));
+
         public override bool AcceptsFocus => true;
 
         protected override void OnFocus(InputState state)
@@ -270,7 +256,7 @@ namespace osu.Game.Overlays
         }
 
         [BackgroundDependencyLoader]
-        private void load(APIAccess api, OsuConfigManager config, OsuColour colours)
+        private void load(APIAccess api, OsuConfigManager config, OsuColour colours, SocialOverlay social)
         {
             this.api = api;
             api.Register(this);
@@ -285,9 +271,13 @@ namespace osu.Game.Overlays
             ChatHeight.TriggerChange();
 
             chatBackground.Colour = colours.ChatBlue;
+
+            // TODO: create a user selection overlay instead of tying up to social
+            tabsArea.UserSelectorActive.ValueChanged += value => social.State = value ? Visibility.Visible : Visibility.Hidden;
         }
 
         private long? lastMessageId;
+        private long? lastPrivateMessageId;
 
         private readonly List<Channel> careChannels = new List<Channel>();
 
@@ -320,8 +310,10 @@ namespace osu.Game.Overlays
                     };
                 });
 
-                messageRequest = Scheduler.AddDelayed(fetchNewMessages, 1000, true);
+                messageRequest = Scheduler.AddDelayed(fetchAllNewMessages, 1000, true);
             };
+
+            initialisePrivateMessages();
 
             api.Queue(req);
         }
@@ -350,7 +342,7 @@ namespace osu.Game.Overlays
                 currentChannel = value;
 
                 textbox.Current.Disabled = currentChannel.ReadOnly;
-                tabsArea.ChannelTabs.Current.Value = value;
+                tabsArea.CurrentChannel.Value = value;
 
                 var loaded = loadedChannels.Find(d => d.Channel == value);
                 if (loaded == null)
@@ -382,7 +374,7 @@ namespace osu.Game.Overlays
         {
             if (channel == null) return;
 
-            var existing = careChannels.Find(c => c.Id == channel.Id);
+            var existing = careChannels.Find(c => c == channel);
 
             if (existing != null)
             {
@@ -392,7 +384,7 @@ namespace osu.Game.Overlays
             else
             {
                 careChannels.Add(channel);
-                tabsArea.ChannelTabs.AddItem(channel);
+                tabsArea.AddChannel(channel);
             }
 
             // let's fetch a small number of messages to bring us up-to-date with the backlog.
@@ -412,9 +404,30 @@ namespace osu.Game.Overlays
 
             careChannels.Remove(channel);
             loadedChannels.Remove(loadedChannels.Find(c => c.Channel == channel));
-            tabsArea.ChannelTabs.RemoveItem(channel);
+            tabsArea.RemoveChannel(channel);
 
             channel.Joined.Value = false;
+        }
+
+        private void initialisePrivateMessages()
+        {
+            var req = new GetPrivateMessagesRequest(null);
+
+            req.Success += delegate(List<Message> messages)
+            {
+                var userChannels = careChannels.OfType<UserChannel>();
+
+                foreach (var channel in userChannels)
+                {
+                    channel.AddNewMessages(messages.Where(m => m.Sender.Id == channel.ToUser.Id || m.TargetId == channel.ToUser.Id).ToArray());
+                }
+            };
+            req.Failure += delegate
+            {
+                Debug.Write("failure!");
+            };
+
+            api.Queue(req);
         }
 
         private void fetchInitialMessages(Channel channel)
@@ -433,6 +446,41 @@ namespace osu.Game.Overlays
             };
 
             api.Queue(req);
+        }
+
+        private void fetchAllNewMessages()
+        {
+            fetchNewMessages();
+            fetchNewPrivateMessages();
+        }
+
+        private void fetchNewPrivateMessages()
+        {
+            if (privateFetchReq != null)
+                return;
+
+            privateFetchReq = new GetPrivateMessagesRequest(lastPrivateMessageId);
+
+            privateFetchReq.Success += delegate(List<Message> messages)
+            {
+                var userChannels = careChannels.OfType<UserChannel>();
+
+                foreach (var channel in userChannels)
+                {
+                    channel.AddNewMessages(messages.Where(m => m.Sender.Id == channel.ToUser.Id || m.TargetId == channel.ToUser.Id).ToArray());
+                }
+
+                lastMessageId = messages.LastOrDefault()?.Id ?? lastPrivateMessageId;
+                privateFetchReq = null;
+            };
+
+            privateFetchReq.Failure += delegate
+            {
+                Debug.Write("failure!");
+                privateFetchReq = null;
+            };
+
+            api.Queue(privateFetchReq);
         }
 
         private void fetchNewMessages()
@@ -516,7 +564,7 @@ namespace osu.Game.Overlays
             {
                 Sender = api.LocalUser.Value,
                 Timestamp = DateTimeOffset.Now,
-                TargetType = TargetType.Channel, //TODO: read this from channel
+                TargetType = (currentChannel is UserChannel) ? TargetType.User : TargetType.Channel,
                 TargetId = target.Id,
                 IsAction = isAction,
                 Content = postText

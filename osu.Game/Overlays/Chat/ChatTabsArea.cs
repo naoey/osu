@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
 // Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
+using System;
+using osu.Framework.Configuration;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -15,6 +17,12 @@ namespace osu.Game.Overlays.Chat
         public readonly ChannelTabControl ChannelTabs;
         public readonly UserTabControl UserTabs;
         public readonly Box Background;
+
+        public BindableBool UserSelectorActive = new BindableBool();
+        public BindableBool ChannelSelectorActive = new BindableBool();
+        public Bindable<Channel> CurrentChannel = new Bindable<Channel>();
+
+        public Action<Channel> OnRequestLeave;
 
         public ChatTabsArea()
         {
@@ -32,6 +40,7 @@ namespace osu.Game.Overlays.Chat
                 {
                     Size = new Vector2(0.5f, 1f),
                     RelativeSizeAxes = Axes.Both,
+                    OnRequestLeave = onRequestleave,
                 },
                 UserTabs = new UserTabControl
                 {
@@ -39,8 +48,47 @@ namespace osu.Game.Overlays.Chat
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.TopRight,
                     Origin = Anchor.TopRight,
+                    OnRequestLeave = onRequestleave,
                 },
             };
+
+            UserSelectorActive.BindTo(UserTabs.SelectorActive);
+            ChannelSelectorActive.BindTo(ChannelTabs.SelectorActive);
+
+            UserTabs.Current.ValueChanged += c => CurrentChannel.Value = c;
+            ChannelTabs.Current.ValueChanged += c => CurrentChannel.Value = c;
+
+            CurrentChannel.ValueChanged += channel =>
+            {
+                if (channel is UserChannel)
+                {
+                    ChannelTabs.Current.Value = null;
+                    UserTabs.Current.Value = (UserChannel)channel;
+                }
+                else
+                {
+                    UserTabs.Current.Value = null;
+                    ChannelTabs.Current.Value = channel;
+                }
+            };
+        }
+
+        private void onRequestleave(Channel c) => OnRequestLeave?.Invoke(c);
+
+        public void AddChannel(Channel value)
+        {
+            if (value is UserChannel)
+                UserTabs.AddItem((UserChannel)value);
+            else
+                ChannelTabs.AddItem(value);
+        }
+
+        public void RemoveChannel(Channel value)
+        {
+            if (value is UserChannel)
+                UserTabs.RemoveItem((UserChannel)value);
+            else
+                ChannelTabs.RemoveItem(value);
         }
     }
 }

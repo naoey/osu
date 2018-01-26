@@ -60,9 +60,9 @@ namespace osu.Game.Tests.Visual
 
         private void removeChannelTabItem(Channel value) => area.ChannelTabs.RemoveItem(value);
 
-        private void addUserTabItem() => area.UserTabs.AddItem(new UserChannel
+        private void addUserTabItem()
         {
-            User = new User
+            var user = new User
             {
                 Username = $"User {area.UserTabs.OpenTabs.Count()}",
                 Colour = @"6644cc",
@@ -70,8 +70,10 @@ namespace osu.Game.Tests.Visual
                 Country = new Country { FlagName = @"AU" },
                 CoverUrl = @"https://osu.ppy.sh/images/headers/profile-covers/c3.jpg",
                 IsSupporter = true,
-            },
-        });
+            };
+
+            area.UserTabs.AddItem(new UserChannel(user, new User()));
+        }
 
         private void removeUserTabItem(UserChannel value) => area.UserTabs.RemoveItem(value);
     }

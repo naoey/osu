@@ -26,7 +26,10 @@ namespace osu.Game.Overlays.Chat
 
         protected override ChatTabItem CreateSelectorTab() => new ChannelSelectorTabItem(new Channel());
 
-        protected override TabItem<Channel> CreateTabItem(Channel value) => new ChannelTabItem(value);
+        protected override TabItem<Channel> CreateTabItem(Channel value) => new ChannelTabItem(value)
+        {
+            OnRequestClose = TabCloseRequested,
+        };
 
         protected class ChannelTabItem : ChatTabItem
         {

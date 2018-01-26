@@ -17,6 +17,7 @@ using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterface;
 using osu.Framework.Graphics.Cursor;
 using osu.Game.Graphics.Containers;
+using osu.Game.Online.API;
 using osu.Game.Overlays.Profile;
 
 namespace osu.Game.Users
@@ -31,6 +32,8 @@ namespace osu.Game.Users
         private Container statusBar;
         private Box statusBg;
         private OsuSpriteText statusMessage;
+
+        private ChatOverlay chat;
 
         private Container content;
         protected override Container<Drawable> Content => content;
@@ -52,8 +55,10 @@ namespace osu.Game.Users
         }
 
         [BackgroundDependencyLoader(permitNulls: true)]
-        private void load(OsuColour colours, UserProfileOverlay profile)
+        private void load(OsuColour colours, UserProfileOverlay profile, ChatOverlay chat)
         {
+            this.chat = chat;
+
             if (colours == null)
                 throw new ArgumentNullException(nameof(colours));
 
@@ -226,9 +231,18 @@ namespace osu.Game.Users
             }
         }
 
+        private void startChat()
+        {
+            chat.StartUserChat(user);
+
+            if (chat.State != Visibility.Visible)
+                chat.ToggleVisibility();
+        }
+
         public MenuItem[] ContextMenuItems => new MenuItem[]
         {
             new OsuMenuItem("View Profile", MenuItemType.Highlighted, ViewProfile),
+            new OsuMenuItem("Start chat", MenuItemType.Standard, startChat),
         };
     }
 }

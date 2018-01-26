@@ -47,6 +47,13 @@ namespace osu.Game.Overlays.Chat
             SelectorActive.BindTo(SelectorTab.Active);
         }
 
+        public void Select(T value)
+        {
+            SelectTab(TabContainer.First(c => c.Value.Equals(value)));
+        }
+
+        public void DeselectAll() => SelectTab(null);
+
         protected override void AddTabItem(TabItem<T> item, bool addToDropdown = true)
         {
             if (SelectorTab.Depth != float.MaxValue)

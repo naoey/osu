@@ -1,10 +1,8 @@
 ﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
 // Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
-using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input;
 using osu.Game.Graphics;
@@ -24,7 +22,7 @@ namespace osu.Game.Overlays.Chat
             Margin = new MarginPadding { Right = SHEAR_WIDTH };
         }
 
-        protected override ChatTabItem CreateSelectorTab() => new UserSelectorTabItem(new UserChannel());
+        protected override ChatTabItem CreateSelectorTab() => new UserSelectorTabItem(new UserChannel(new User(), new User()));
 
         protected override TabItem<UserChannel> CreateTabItem(UserChannel value) => new UserTabItem(value) { OnRequestClose = TabCloseRequested };
 
@@ -38,7 +36,7 @@ namespace osu.Game.Overlays.Chat
                 Anchor = Anchor.BottomRight;
                 Origin = Anchor.BottomRight;
 
-                ContentContainer.Add(new Avatar(Value.User)
+                ContentContainer.Add(new Avatar(Value.ToUser)
                 {
                     Width = 40,
                     Height = 40,
@@ -55,8 +53,8 @@ namespace osu.Game.Overlays.Chat
             [BackgroundDependencyLoader]
             private new void load(OsuColour colour)
             {
-                if (Value.User.Colour != null)
-                    BackgroundActive = BackgroundInactive = BackgroundHover = OsuColour.FromHex(Value.User.Colour);
+                if (Value.ToUser.Colour != null)
+                    BackgroundActive = BackgroundInactive = BackgroundHover = OsuColour.FromHex(Value.ToUser.Colour);
                 else
                     BackgroundActive = BackgroundInactive = BackgroundHover = colour.BlueDarker;
             }
