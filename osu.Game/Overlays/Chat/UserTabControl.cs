@@ -18,8 +18,10 @@ namespace osu.Game.Overlays.Chat
     {
         public UserTabControl()
         {
+            HeaderBehaviour = DropdownHeaderBehaviour.Flowing;
             TabContainer.Anchor = Anchor.TopRight;
             TabContainer.Origin = Anchor.TopRight;
+            Margin = new MarginPadding { Right = SHEAR_WIDTH };
         }
 
         protected override ChatTabItem CreateSelectorTab() => new UserSelectorTabItem(new UserChannel());

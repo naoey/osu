@@ -25,7 +25,7 @@ namespace osu.Game.Overlays.Chat
 {
     public abstract class ChatTabControl<T> : OsuTabControl<T>
     {
-        private const float shear_width = 10;
+        protected const float SHEAR_WIDTH = 10;
 
         public Action<T> OnRequestLeave;
 
@@ -38,7 +38,7 @@ namespace osu.Game.Overlays.Chat
         public ChatTabControl()
         {
             TabContainer.Margin = new MarginPadding { Left = 50 };
-            TabContainer.Spacing = new Vector2(-shear_width, 0);
+            TabContainer.Spacing = new Vector2(-SHEAR_WIDTH, 0);
             TabContainer.Masking = false;
 
             // TODO: remove these virtual calls from constructor
@@ -186,7 +186,7 @@ namespace osu.Game.Overlays.Chat
 
                 RelativeSizeAxes = Axes.Y;
 
-                Shear = new Vector2(shear_width / ChatOverlay.TAB_AREA_HEIGHT, 0);
+                Shear = new Vector2(SHEAR_WIDTH / ChatOverlay.TAB_AREA_HEIGHT, 0);
 
                 Masking = true;
                 EdgeEffect = new EdgeEffectParameters
@@ -214,7 +214,7 @@ namespace osu.Game.Overlays.Chat
                     },
                     ContentContainer = new Container
                     {
-                        Shear = new Vector2(-shear_width / ChatOverlay.TAB_AREA_HEIGHT, 0),
+                        Shear = new Vector2(-SHEAR_WIDTH / ChatOverlay.TAB_AREA_HEIGHT, 0),
                         RelativeSizeAxes = Axes.Both,
                         Children = new Drawable[]
                         {
