@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
@@ -18,6 +19,10 @@ namespace osu.Game.Tests.Visual
     [Description("Testing chat api and overlay")]
     public class TestCaseChatDisplay : OsuTestCase
     {
+        private DependencyContainer dependencies;
+
+        protected override IReadOnlyDependencyContainer CreateLocalDependencies(IReadOnlyDependencyContainer parent) => dependencies = new DependencyContainer(parent);
+
         public override IReadOnlyList<Type> RequiredTypes => new[]
         {
             typeof(ChatTabsArea),
@@ -27,15 +32,23 @@ namespace osu.Game.Tests.Visual
         };
 
         private readonly ChatOverlay overlay;
-        private readonly ChatTabsArea area;
+
+        private ChatTabsArea area;
 
         public TestCaseChatDisplay()
         {
-            Add(overlay = new ChatOverlay
+            overlay = new ChatOverlay
             {
                 State = Visibility.Hidden,
-            });
+            };
+        }
 
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            dependencies.Cache(overlay);
+
+            Add(overlay);
             Add(area = new ChatTabsArea
             {
                 Anchor = Anchor.Centre,
