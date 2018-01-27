@@ -31,7 +31,7 @@ namespace osu.Game.Overlays
     public class ChatOverlay : OsuFocusedOverlayContainer, IOnlineComponent
     {
         private const float textbox_height = 60;
-        private const float channel_selection_min_height = 0.3f;
+        private const float selection_overlay_min_height = 0.3f;
 
         private ScheduledDelegate messageRequest;
 
@@ -60,8 +60,9 @@ namespace osu.Game.Overlays
 
         public Bindable<double> ChatHeight { get; set; }
 
-        private readonly Container channelSelectionContainer;
+        private readonly Container selectionContainer;
         private readonly ChannelSelectionOverlay channelSelection;
+        private readonly UserSelectionOverlay userSelection;
 
         public override bool Contains(Vector2 screenSpacePos) => chatContainer.ReceiveMouseInputAt(screenSpacePos) || channelSelection.State == Visibility.Visible && channelSelection.ReceiveMouseInputAt(screenSpacePos);
 
@@ -76,14 +77,18 @@ namespace osu.Game.Overlays
 
             Children = new Drawable[]
             {
-                channelSelectionContainer = new Container
+                selectionContainer = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
                     Height = 1f - DEFAULT_HEIGHT,
                     Masking = true,
-                    Children = new[]
+                    Children = new Drawable[]
                     {
                         channelSelection = new ChannelSelectionOverlay
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
+                        userSelection = new UserSelectionOverlay
                         {
                             RelativeSizeAxes = Axes.Both,
                         },
@@ -157,17 +162,56 @@ namespace osu.Game.Overlays
 
             tabsArea.OnRequestLeave = removeChannel;
             tabsArea.CurrentChannel.ValueChanged += newChannel => CurrentChannel = newChannel;
-            tabsArea.ChannelSelectorActive.ValueChanged += value => channelSelection.State = value ? Visibility.Visible : Visibility.Hidden;
+            tabsArea.ChannelSelectorActive.ValueChanged+= value =>
+            {
+                if (value)
+                {
+                    if (tabsArea.UserSelectorActive.Value)
+                        tabsArea.UserSelectorActive.Value = false;
+                    channelSelection.State = Visibility.Visible;
+                }
+                else
+                {
+                    channelSelection.State = Visibility.Hidden;
+                }
+            };
+            tabsArea.UserSelectorActive.ValueChanged += value =>
+            {
+                if (value)
+                {
+                    if (tabsArea.ChannelSelectorActive.Value)
+                        tabsArea.ChannelSelectorActive.Value = false;
+                    userSelection.State = Visibility.Visible;
+                }
+                else
+                {
+                    userSelection.State = Visibility.Hidden;
+                }
+            };
 
             channelSelection.StateChanged += state =>
             {
-                tabsArea.ChannelTabs.SelectorActive.Value = state == Visibility.Visible;
+                tabsArea.ChannelSelectorActive.Value = state == Visibility.Visible;
 
                 if (state == Visibility.Visible)
                 {
                     textbox.HoldFocus = false;
-                    if (1f - ChatHeight.Value < channel_selection_min_height)
-                        transformChatHeightTo(1f - channel_selection_min_height, 800, Easing.OutQuint);
+                    if (1f - ChatHeight.Value < selection_overlay_min_height)
+                        transformChatHeightTo(1f - selection_overlay_min_height, 800, Easing.OutQuint);
+                }
+                else
+                    textbox.HoldFocus = true;
+            };
+
+            userSelection.StateChanged += state =>
+            {
+                tabsArea.UserSelectorActive.Value = state == Visibility.Visible;
+
+                if (state == Visibility.Visible)
+                {
+                    textbox.HoldFocus = false;
+                    if (1f - ChatHeight.Value < selection_overlay_min_height)
+                        transformChatHeightTo(1f - selection_overlay_min_height, 800, Easing.OutQuint);
                 }
                 else
                     textbox.HoldFocus = true;
@@ -197,8 +241,8 @@ namespace osu.Game.Overlays
                 double targetChatHeight = startDragChatHeight - (state.Mouse.Position.Y - state.Mouse.PositionMouseDown.Value.Y) / Parent.DrawSize.Y;
 
                 // If the channel selection screen is shown, mind its minimum height
-                if (channelSelection.State == Visibility.Visible && targetChatHeight > 1f - channel_selection_min_height)
-                    targetChatHeight = 1f - channel_selection_min_height;
+                if (channelSelection.State == Visibility.Visible && targetChatHeight > 1f - selection_overlay_min_height)
+                    targetChatHeight = 1f - selection_overlay_min_height;
 
                 ChatHeight.Value = targetChatHeight;
             }
@@ -256,7 +300,7 @@ namespace osu.Game.Overlays
         }
 
         [BackgroundDependencyLoader]
-        private void load(APIAccess api, OsuConfigManager config, OsuColour colours, SocialOverlay social)
+        private void load(APIAccess api, OsuConfigManager config, OsuColour colours)
         {
             this.api = api;
             api.Register(this);
@@ -265,15 +309,12 @@ namespace osu.Game.Overlays
             ChatHeight.ValueChanged += h =>
             {
                 chatContainer.Height = (float)h;
-                channelSelectionContainer.Height = 1f - (float)h;
+                selectionContainer.Height = 1f - (float)h;
                 tabsArea.Background.FadeTo(h == 1 ? 1 : 0.8f, 200);
             };
             ChatHeight.TriggerChange();
 
             chatBackground.Colour = colours.ChatBlue;
-
-            // TODO: create a user selection overlay instead of tying up to social
-            tabsArea.UserSelectorActive.ValueChanged += value => social.State = value ? Visibility.Visible : Visibility.Hidden;
         }
 
         private long? lastMessageId;
@@ -354,12 +395,10 @@ namespace osu.Game.Overlays
                     loadedChannels.Add(loaded);
                     LoadComponentAsync(loaded, l =>
                     {
-                        if (currentChannel.Messages.Any())
-                            loading.Hide();
-
                         currentChannelContainer.Clear(false);
                         currentChannelContainer.Add(loaded);
                         currentChannelContainer.FadeIn(500, Easing.OutQuint);
+                        loading.Hide();
                     });
                 }
                 else

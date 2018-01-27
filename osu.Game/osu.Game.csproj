@@ -276,6 +276,7 @@
     <Compile Include="Online\Chat\UserChannel.cs" />
     <Compile Include="Overlays\Chat\ChannelTabControl.cs" />
     <Compile Include="Overlays\Chat\ChatTabsArea.cs" />
+    <Compile Include="Overlays\Chat\UserSelectionOverlay.cs" />
     <Compile Include="Overlays\Chat\UserTabControl.cs" />
     <Compile Include="Migrations\20180125143340_Settings.cs" />
     <Compile Include="Migrations\20180125143340_Settings.designer.cs">

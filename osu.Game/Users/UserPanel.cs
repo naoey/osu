@@ -34,6 +34,7 @@ namespace osu.Game.Users
         private OsuSpriteText statusMessage;
 
         private ChatOverlay chat;
+        private UserProfileOverlay profile;
 
         private Container content;
         protected override Container<Drawable> Content => content;
@@ -42,7 +43,7 @@ namespace osu.Game.Users
 
         public new Action Action;
 
-        protected Action ViewProfile;
+        public Action ViewProfile;
 
         public UserPanel(User user)
         {
@@ -198,10 +199,17 @@ namespace osu.Game.Users
             Status.ValueChanged += displayStatus;
             Status.ValueChanged += status => statusBg.FadeColour(status?.GetAppropriateColour(colours) ?? colours.Gray5, 500, Easing.OutQuint);
 
-            base.Action = ViewProfile = () =>
+            this.profile = profile;
+
+            ViewProfile = () => profile?.ShowUser(user);
+
+            base.Action = () =>
             {
-                Action?.Invoke();
-                profile?.ShowUser(user);
+                // If this panel has been assigned an action, don't do the default show profile
+                if (Action == null)
+                    ViewProfile();
+                else
+                    Action.Invoke();
             };
         }
 

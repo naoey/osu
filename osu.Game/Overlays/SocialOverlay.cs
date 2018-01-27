@@ -94,6 +94,26 @@ namespace osu.Game.Overlays
             api.Register(this);
         }
 
+        protected virtual SocialPanel CreatePanelForStyle(PanelDisplayStyle style, User user)
+        {
+            SocialPanel panel;
+            switch (style)
+            {
+                case PanelDisplayStyle.Grid:
+                    panel = new SocialGridPanel(user)
+                    {
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre
+                    };
+                    break;
+                default:
+                    panel = new SocialListPanel(user);
+                    break;
+            }
+            panel.Status.BindTo(user.Status);
+            return panel;
+        }
+
         private void recreatePanels(PanelDisplayStyle displayStyle)
         {
             clearPanels();
@@ -107,25 +127,7 @@ namespace osu.Game.Overlays
                 AutoSizeAxes = Axes.Y,
                 Spacing = new Vector2(10f),
                 Margin = new MarginPadding { Top = 10 },
-                ChildrenEnumerable = Users.Select(u =>
-                {
-                    SocialPanel panel;
-                    switch (displayStyle)
-                    {
-                        case PanelDisplayStyle.Grid:
-                            panel = new SocialGridPanel(u)
-                            {
-                                Anchor = Anchor.TopCentre,
-                                Origin = Anchor.TopCentre
-                            };
-                            break;
-                        default:
-                            panel = new SocialListPanel(u);
-                            break;
-                    }
-                    panel.Status.BindTo(u.Status);
-                    return panel;
-                })
+                ChildrenEnumerable = Users.Select(u => CreatePanelForStyle(displayStyle, u)),
             };
 
             LoadComponentAsync(newPanels, f =>

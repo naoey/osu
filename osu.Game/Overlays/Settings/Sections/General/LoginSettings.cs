@@ -136,7 +136,7 @@ namespace osu.Game.Overlays.Settings.Sections.General
                                 panel = new UserPanel(api.LocalUser.Value)
                                 {
                                     RelativeSizeAxes = Axes.X,
-                                    Action = RequestHide
+                                    Action = () => { RequestHide(); panel.ViewProfile?.Invoke(); }
                                 },
                                 dropdown = new UserDropdown { RelativeSizeAxes = Axes.X },
                             },

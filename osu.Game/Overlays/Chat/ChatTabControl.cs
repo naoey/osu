@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Game.Graphics.Containers;
-using osu.Game.Users;
 
 namespace osu.Game.Overlays.Chat
 {
