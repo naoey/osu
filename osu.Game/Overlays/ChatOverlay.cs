@@ -471,6 +471,12 @@ namespace osu.Game.Overlays
 
         private void fetchInitialMessages(Channel channel)
         {
+            if (channel is UserChannel)
+            {
+                initialisePrivateMessages();
+                return;
+            }
+
             var req = new GetMessagesRequest(new List<Channel> { channel }, null);
 
             req.Success += delegate (List<Message> messages)
@@ -495,21 +501,21 @@ namespace osu.Game.Overlays
 
         private void fetchNewPrivateMessages()
         {
-            if (privateFetchReq != null)
+            var userChannels = careChannels.OfType<UserChannel>();
+
+            if (privateFetchReq != null || !userChannels.Any())
                 return;
 
             privateFetchReq = new GetPrivateMessagesRequest(lastPrivateMessageId);
 
             privateFetchReq.Success += delegate(List<Message> messages)
             {
-                var userChannels = careChannels.OfType<UserChannel>();
-
                 foreach (var channel in userChannels)
                 {
                     channel.AddNewMessages(messages.Where(m => m.Sender.Id == channel.ToUser.Id || m.TargetId == channel.ToUser.Id).ToArray());
                 }
 
-                lastMessageId = messages.LastOrDefault()?.Id ?? lastPrivateMessageId;
+                lastPrivateMessageId = messages.LastOrDefault()?.Id ?? lastPrivateMessageId;
                 privateFetchReq = null;
             };
 
