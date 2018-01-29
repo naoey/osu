@@ -12,7 +12,7 @@ namespace osu.Game.Overlays.Chat
     {
         private ChatOverlay chat;
 
-        [BackgroundDependencyLoader]
+        [BackgroundDependencyLoader(permitNulls:true)]
         private void load(ChatOverlay chat)
         {
             this.chat = chat;
@@ -22,7 +22,7 @@ namespace osu.Game.Overlays.Chat
         {
             var panel = base.CreatePanelForStyle(style, user);
 
-            panel.Action = () => chat.StartUserChat(user);
+            panel.Action = () => chat?.StartUserChat(user);
 
             return panel;
         }

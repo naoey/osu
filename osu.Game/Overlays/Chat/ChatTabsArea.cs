@@ -60,10 +60,12 @@ namespace osu.Game.Overlays.Chat
 
             CurrentChannel.ValueChanged += channel =>
             {
-                if (channel is UserChannel)
+                var newChannel = channel as UserChannel;
+
+                if (newChannel != null)
                 {
                     ChannelTabs.Current.Value = null;
-                    UserTabs.Current.Value = (UserChannel)channel;
+                    UserTabs.Current.Value = newChannel;
                 }
                 else
                 {
@@ -77,16 +79,20 @@ namespace osu.Game.Overlays.Chat
 
         public void AddChannel(Channel value)
         {
-            if (value is UserChannel)
-                UserTabs.AddItem((UserChannel)value);
+            var channel = value as UserChannel;
+
+            if (channel != null)
+                UserTabs.AddItem(channel);
             else
                 ChannelTabs.AddItem(value);
         }
 
         public void RemoveChannel(Channel value)
         {
-            if (value is UserChannel)
-                UserTabs.RemoveItem((UserChannel)value);
+            var channel = value as UserChannel;
+
+            if (channel != null)
+                UserTabs.RemoveItem(channel);
             else
                 ChannelTabs.RemoveItem(value);
         }

@@ -8,7 +8,6 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Graphics;
 using osu.Game.Online.Chat;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Chat;
@@ -75,17 +74,18 @@ namespace osu.Game.Tests.Visual
 
         private void addUserTabItem()
         {
-            var user = new User
+            area.UserTabs.AddItem(new UserChannel
             {
-                Username = $"User {area.UserTabs.OpenTabs.Count()}",
-                Colour = @"6644cc",
-                Id = 2,
-                Country = new Country { FlagName = @"AU" },
-                CoverUrl = @"https://osu.ppy.sh/images/headers/profile-covers/c3.jpg",
-                IsSupporter = true,
-            };
-
-            area.UserTabs.AddItem(new UserChannel(user, new User()));
+                User = new User
+                {
+                    Username = $"User {area.UserTabs.OpenTabs.Count()}",
+                    Colour = @"6644cc",
+                    Id = 2,
+                    Country = new Country { FlagName = @"AU" },
+                    CoverUrl = @"https://osu.ppy.sh/images/headers/profile-covers/c3.jpg",
+                    IsSupporter = true,
+                }
+            });
         }
 
         private void removeUserTabItem(UserChannel value) => area.UserTabs.RemoveItem(value);

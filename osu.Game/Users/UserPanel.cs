@@ -17,7 +17,6 @@ using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterface;
 using osu.Framework.Graphics.Cursor;
 using osu.Game.Graphics.Containers;
-using osu.Game.Online.API;
 using osu.Game.Overlays.Profile;
 
 namespace osu.Game.Users
@@ -198,8 +197,6 @@ namespace osu.Game.Users
 
             Status.ValueChanged += displayStatus;
             Status.ValueChanged += status => statusBg.FadeColour(status?.GetAppropriateColour(colours) ?? colours.Gray5, 500, Easing.OutQuint);
-
-            this.profile = profile;
 
             ViewProfile = () => profile?.ShowUser(user);
 

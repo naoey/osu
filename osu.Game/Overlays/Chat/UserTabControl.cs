@@ -22,7 +22,7 @@ namespace osu.Game.Overlays.Chat
             Margin = new MarginPadding { Right = SHEAR_WIDTH };
         }
 
-        protected override ChatTabItem CreateSelectorTab() => new UserSelectorTabItem(new UserChannel(new User(), new User()));
+        protected override ChatTabItem CreateSelectorTab() => new UserSelectorTabItem(new UserChannel());
 
         protected override TabItem<UserChannel> CreateTabItem(UserChannel value) => new UserTabItem(value) { OnRequestClose = TabCloseRequested };
 
@@ -30,13 +30,16 @@ namespace osu.Game.Overlays.Chat
         {
             private Avatar avatar;
 
+            // TODO: identify the icon in the design ಠ_ಠ
+            protected override FontAwesome BackgroundIcon => FontAwesome.fa_comments;
+
             public UserTabItem(UserChannel value)
                 : base(value)
             {
                 Anchor = Anchor.BottomRight;
                 Origin = Anchor.BottomRight;
 
-                ContentContainer.Add(new Avatar(Value.ToUser)
+                ContentContainer.Add(new Avatar(Value.User)
                 {
                     Width = 40,
                     Height = 40,
@@ -53,8 +56,8 @@ namespace osu.Game.Overlays.Chat
             [BackgroundDependencyLoader]
             private new void load(OsuColour colour)
             {
-                if (Value.ToUser.Colour != null)
-                    BackgroundActive = BackgroundInactive = BackgroundHover = OsuColour.FromHex(Value.ToUser.Colour);
+                if (Value.User.Colour != null)
+                    BackgroundActive = BackgroundInactive = BackgroundHover = OsuColour.FromHex(Value.User.Colour);
                 else
                     BackgroundActive = BackgroundInactive = BackgroundHover = colour.BlueDarker;
             }

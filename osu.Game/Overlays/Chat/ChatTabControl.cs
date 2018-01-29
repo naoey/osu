@@ -34,7 +34,7 @@ namespace osu.Game.Overlays.Chat
 
         protected readonly ChatTabItem SelectorTab;
 
-        public ChatTabControl()
+        protected ChatTabControl()
         {
             TabContainer.Margin = new MarginPadding { Left = 50 };
             TabContainer.Spacing = new Vector2(-SHEAR_WIDTH, 0);

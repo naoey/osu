@@ -240,8 +240,8 @@ namespace osu.Game.Overlays
 
                 double targetChatHeight = startDragChatHeight - (state.Mouse.Position.Y - state.Mouse.PositionMouseDown.Value.Y) / Parent.DrawSize.Y;
 
-                // If the channel selection screen is shown, mind its minimum height
-                if (channelSelection.State == Visibility.Visible && targetChatHeight > 1f - selection_overlay_min_height)
+                // If the either of the selection screens are shown, mind its minimum height
+                if (userSelection.State == Visibility.Visible || channelSelection.State == Visibility.Visible && targetChatHeight > 1f - selection_overlay_min_height)
                     targetChatHeight = 1f - selection_overlay_min_height;
 
                 ChatHeight.Value = targetChatHeight;
@@ -270,7 +270,7 @@ namespace osu.Game.Overlays
         }
 
         // TODO: update all UserChannels with new LocalUser if it changes
-        public void StartUserChat(User user) => addChannel(new UserChannel(user, api.LocalUser.Value));
+        public void StartUserChat(User user) => addChannel(new UserChannel { User = user });
 
         public override bool AcceptsFocus => true;
 
@@ -321,6 +321,7 @@ namespace osu.Game.Overlays
         private long? lastPrivateMessageId;
 
         private readonly List<Channel> careChannels = new List<Channel>();
+        private readonly List<UserChannel> userChannels = new List<UserChannel>();
 
         private readonly List<DrawableChannel> loadedChannels = new List<DrawableChannel>();
 
@@ -353,8 +354,6 @@ namespace osu.Game.Overlays
 
                 messageRequest = Scheduler.AddDelayed(fetchAllNewMessages, 1000, true);
             };
-
-            initialisePrivateMessages();
 
             api.Queue(req);
         }
@@ -389,7 +388,6 @@ namespace osu.Game.Overlays
                 if (loaded == null)
                 {
                     currentChannelContainer.FadeOut(500, Easing.OutQuint);
-                    loading.Show();
 
                     loaded = new DrawableChannel(currentChannel);
                     loadedChannels.Add(loaded);
@@ -398,7 +396,9 @@ namespace osu.Game.Overlays
                         currentChannelContainer.Clear(false);
                         currentChannelContainer.Add(loaded);
                         currentChannelContainer.FadeIn(500, Easing.OutQuint);
-                        loading.Hide();
+
+                        if (currentChannel.Messages.Any())
+                            loading.Hide();
                     });
                 }
                 else
@@ -413,15 +413,39 @@ namespace osu.Game.Overlays
         {
             if (channel == null) return;
 
-            var existing = careChannels.Find(c => c == channel);
+            var userChannel = channel as UserChannel;
 
-            if (existing != null)
+            if (userChannel != null)
+            {
+                var existingUserChannel = userChannels.Find(c => c.Equals(userChannel));
+
+                if (existingUserChannel != null)
+                {
+                    // focus this tab if user is trying to open an already open tab
+                    CurrentChannel = existingUserChannel;
+                }
+                else
+                {
+                    loading.Show();
+                    userChannels.Add(userChannel);
+                    tabsArea.AddChannel(userChannel);
+                }
+
+                userChannel.Joined.Value = true;
+
+                return;
+            }
+
+            var existingChannel = careChannels.Find(c => c == channel);
+
+            if (existingChannel != null)
             {
                 // if we already have this channel loaded, we don't want to make a second one.
-                channel = existing;
+                channel = existingChannel;
             }
             else
             {
+                loading.Show();
                 careChannels.Add(channel);
                 tabsArea.AddChannel(channel);
             }
@@ -439,49 +463,37 @@ namespace osu.Game.Overlays
         {
             if (channel == null) return;
 
-            if (channel == CurrentChannel) CurrentChannel = null;
+            if (channel == CurrentChannel)
+            {
+                loading.Hide();
+                CurrentChannel = null;
+            }
 
-            careChannels.Remove(channel);
             loadedChannels.Remove(loadedChannels.Find(c => c.Channel == channel));
             tabsArea.RemoveChannel(channel);
+
+            var userChannel = channel as UserChannel;
+
+            if (userChannel != null)
+            {
+                userChannels.Remove(userChannel);
+                return;
+            }
+
+            careChannels.Remove(channel);
 
             channel.Joined.Value = false;
         }
 
-        private void initialisePrivateMessages()
-        {
-            var req = new GetPrivateMessagesRequest(null);
-
-            req.Success += delegate(List<Message> messages)
-            {
-                var userChannels = careChannels.OfType<UserChannel>();
-
-                foreach (var channel in userChannels)
-                {
-                    channel.AddNewMessages(messages.Where(m => m.Sender.Id == channel.ToUser.Id || m.TargetId == channel.ToUser.Id).ToArray());
-                }
-            };
-            req.Failure += delegate
-            {
-                Debug.Write("failure!");
-            };
-
-            api.Queue(req);
-        }
-
         private void fetchInitialMessages(Channel channel)
         {
-            if (channel is UserChannel)
-            {
-                initialisePrivateMessages();
-                return;
-            }
-
             var req = new GetMessagesRequest(new List<Channel> { channel }, null);
 
             req.Success += delegate (List<Message> messages)
             {
-                loading.Hide();
+                if (channel.Equals(CurrentChannel))
+                    loading.Hide();
+
                 channel.AddNewMessages(messages.ToArray());
                 Debug.Write("success!");
             };
@@ -495,14 +507,12 @@ namespace osu.Game.Overlays
 
         private void fetchAllNewMessages()
         {
-            fetchNewMessages();
+            fetchNewChannelMessages();
             fetchNewPrivateMessages();
         }
 
         private void fetchNewPrivateMessages()
         {
-            var userChannels = careChannels.OfType<UserChannel>();
-
             if (privateFetchReq != null || !userChannels.Any())
                 return;
 
@@ -512,7 +522,10 @@ namespace osu.Game.Overlays
             {
                 foreach (var channel in userChannels)
                 {
-                    channel.AddNewMessages(messages.Where(m => m.Sender.Id == channel.ToUser.Id || m.TargetId == channel.ToUser.Id).ToArray());
+                    channel.AddNewMessages(messages.Where(m => m.Sender.Id == channel.User.Id || m.TargetId == channel.User.Id).ToArray());
+
+                    if (channel.Equals(CurrentChannel))
+                        loading.Hide();
                 }
 
                 lastPrivateMessageId = messages.LastOrDefault()?.Id ?? lastPrivateMessageId;
@@ -528,7 +541,7 @@ namespace osu.Game.Overlays
             api.Queue(privateFetchReq);
         }
 
-        private void fetchNewMessages()
+        private void fetchNewChannelMessages()
         {
             if (fetchReq != null) return;
 
@@ -543,6 +556,10 @@ namespace osu.Game.Overlays
 
                 Debug.Write("success!");
                 fetchReq = null;
+
+                if (careChannels.Contains(CurrentChannel))
+                    // current channel might be a user channel, in which case we let it handle its own loading state
+                    loading.Hide();
             };
 
             fetchReq.Failure += delegate
@@ -609,7 +626,7 @@ namespace osu.Game.Overlays
             {
                 Sender = api.LocalUser.Value,
                 Timestamp = DateTimeOffset.Now,
-                TargetType = (currentChannel is UserChannel) ? TargetType.User : TargetType.Channel,
+                TargetType = currentChannel is UserChannel ? TargetType.User : TargetType.Channel,
                 TargetId = target.Id,
                 IsAction = isAction,
                 Content = postText

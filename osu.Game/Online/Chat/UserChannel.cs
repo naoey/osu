@@ -8,22 +8,12 @@ namespace osu.Game.Online.Chat
 {
     public class UserChannel : Channel, IEquatable<UserChannel>
     {
-        public User ToUser { get; }
-
-        public User FromUser { get; }
-
-        public UserChannel(User to, User from)
-        {
-            ToUser = to;
-            FromUser = from;
-
-            Id = ToUser.Id;
-        }
+        public User User { get; set; }
 
         public override bool Equals(Channel other) => Equals(other as UserChannel);
 
-        public bool Equals(UserChannel other) => ToUser?.Id == other?.ToUser?.Id;
+        public bool Equals(UserChannel other) => User?.Id == other?.User?.Id;
 
-        public override string ToString() => ToUser?.Username ?? string.Empty;
+        public override string ToString() => User?.Username ?? string.Empty;
     }
 }
