@@ -42,19 +42,12 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
         }
 
         private readonly LineGraph graph;
-        private readonly float yInterval;
-        private readonly int xInterval;
 
-        /// <summary>
-        /// Create a historical graph of time (in months) vs. value.
-        /// </summary>
-        /// <param name="yInterval">The interval of the Y-axis guides (value).</param>
-        /// <param name="xInterval">The interval of the X-axis guides (months).</param>
-        public HistoricalGraph(float yInterval = 100, int xInterval = 3)
+        public float YInterval = 500;
+        public int XInterval = 3;
+
+        public HistoricalGraph()
         {
-            this.yInterval = yInterval;
-            this.xInterval = xInterval;
-
             Child = graph = new LineGraph
             {
                 Margin = new MarginPadding { Left = 50 },
@@ -71,10 +64,10 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
 
         private void updateRulers()
         {
-            int horizontalRulerCount = (int)Math.Round(graph.Values.Max() / 500);
+            int horizontalRulerCount = (int)Math.Round(graph.Values.Max() / YInterval);
             float horizontalRulerSpacing = horizontalRulerCount <= 0 ? 0 : 180 / horizontalRulerCount;
 
-            for (int i = horizontalRulerCount - 1; i >= 0; i--)
+            for (int i = horizontalRulerCount - 1, j = 0; i >= 0; i--, j++)
             {
                 Add(new Container
                 {
@@ -82,12 +75,12 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
                     Origin = Anchor.TopLeft,
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
-                    Y = horizontalRulerSpacing * i,
+                    Y = horizontalRulerSpacing * j,
                     Children = new Drawable[]
                     {
                         new OsuSpriteText
                         {
-                            Text = (yInterval * (i + 1)).ToString(),
+                            Text = (YInterval * (i + 1)).ToString(),
                             Anchor = Anchor.CentreLeft,
                             Origin = Anchor.CentreLeft,
                         },
@@ -106,7 +99,7 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
 
             float verticalRulerSpacing = Width / counts.Count;
 
-            for (int i = 0; i < counts.Count; i += xInterval)
+            for (int i = 0; i < counts.Count; i += XInterval)
             {
                 Add(new Container
                 {

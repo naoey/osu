@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using osu.Framework.Configuration;
+﻿using osu.Framework.Configuration;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
@@ -39,6 +38,7 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
 
         private void userChanged(User user)
         {
+            graph.YInterval = 1000;
             graph.Counts = user.MonthlyPlayCounts.ToList();
         }
     }

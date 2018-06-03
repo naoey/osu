@@ -38,6 +38,13 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
 
         private void userChanged(User user)
         {
+            float yInterval = 0.1f;
+            float maxValue = user.ReplaysWatchedCounts.Select(r => r.Count).Max();
+
+            while ((maxValue /= 10) > 0.1f)
+                yInterval *= 10;
+
+            graph.YInterval = yInterval;
             graph.Counts = user.ReplaysWatchedCounts.ToList();
         }
     }
