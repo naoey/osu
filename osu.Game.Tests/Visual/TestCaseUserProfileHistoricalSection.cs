@@ -27,6 +27,7 @@ namespace osu.Game.Tests.Visual
                 typeof(DrawableProfileRow),
                 typeof(PlayHistoryRow),
                 typeof(ReplayWatchedHistoryRow),
+                typeof(HistoricalGraph),
             };
 
         private HistoricalSection section;
@@ -46,9 +47,9 @@ namespace osu.Game.Tests.Visual
                 Child = section = new HistoricalSection(),
             });
 
+            AddStep("Show graphs", showUserWithGraphs);
             AddStep("Show peppy", () => section.User.Value = new User { Id = 2 });
             AddStep("Show WubWoofWolf", () => section.User.Value = new User { Id = 39828 });
-            AddStep("Show graphs", showUserWithGraphs);
         }
 
         private void showUserWithGraphs()
@@ -60,7 +61,7 @@ namespace osu.Game.Tests.Visual
                 userWithHistoricalCounts.MonthlyPlayCounts[i] = userWithHistoricalCounts.ReplaysWatchedCounts[i] = new User.HistoricalCount
                 {
                     StartDate = new DateTime(2017, 12 - i, 1),
-                    Count = RNG.Next(0, 1000),
+                    Count = RNG.Next(0, 3000),
                 };
             }
 
