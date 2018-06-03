@@ -119,6 +119,12 @@ namespace osu.Game.Users
         [JsonProperty(@"kudosu")]
         public KudosuCount Kudosu;
 
+        [JsonProperty(@"monthly_playcounts")]
+        public HistoricalCount[] MonthlyPlayCounts;
+
+        [JsonProperty(@"replays_watched_counts")]
+        public HistoricalCount[] ReplaysWatchedCounts;
+
         public class KudosuCount
         {
             [JsonProperty(@"total")]
@@ -126,6 +132,15 @@ namespace osu.Game.Users
 
             [JsonProperty(@"available")]
             public int Available;
+        }
+
+        public class HistoricalCount
+        {
+            [JsonProperty(@"start_date")]
+            public DateTime StartDate;
+
+            [JsonProperty(@"count")]
+            public int Count;
         }
 
         [JsonProperty(@"statistics")]

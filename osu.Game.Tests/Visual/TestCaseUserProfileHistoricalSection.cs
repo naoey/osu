@@ -7,6 +7,7 @@ using NUnit.Framework;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.MathUtils;
 using osu.Game.Graphics;
 using osu.Game.Overlays.Profile.Sections;
 using osu.Game.Overlays.Profile.Sections.Historical;
@@ -15,7 +16,7 @@ using osu.Game.Users;
 namespace osu.Game.Tests.Visual
 {
     [TestFixture]
-    public class TestCaseHistoricalSection : OsuTestCase
+    public class TestCaseUserProfileHistoricalSection : OsuTestCase
     {
         public override IReadOnlyList<Type> RequiredTypes =>
             new[]
@@ -23,12 +24,15 @@ namespace osu.Game.Tests.Visual
                 typeof(HistoricalSection),
                 typeof(PaginatedMostPlayedBeatmapContainer),
                 typeof(DrawableMostPlayedRow),
-                typeof(DrawableProfileRow)
+                typeof(DrawableProfileRow),
+                typeof(PlayHistoryRow),
+                typeof(ReplayWatchedHistoryRow),
             };
 
-        public TestCaseHistoricalSection()
+        private HistoricalSection section;
+
+        public TestCaseUserProfileHistoricalSection()
         {
-            HistoricalSection section;
 
             Add(new Box
             {
@@ -44,6 +48,23 @@ namespace osu.Game.Tests.Visual
 
             AddStep("Show peppy", () => section.User.Value = new User { Id = 2 });
             AddStep("Show WubWoofWolf", () => section.User.Value = new User { Id = 39828 });
+            AddStep("Show graphs", showUserWithGraphs);
+        }
+
+        private void showUserWithGraphs()
+        {
+            User userWithHistoricalCounts = new User { Id = 2, MonthlyPlayCounts = new User.HistoricalCount[8], ReplaysWatchedCounts = new User.HistoricalCount[8] };
+
+            for (int i = 0; i < 8; i++)
+            {
+                userWithHistoricalCounts.MonthlyPlayCounts[i] = userWithHistoricalCounts.ReplaysWatchedCounts[i] = new User.HistoricalCount
+                {
+                    StartDate = new DateTime(2017, 12 - i, 1),
+                    Count = RNG.Next(0, 1000),
+                };
+            }
+
+            section.User.Value = userWithHistoricalCounts;
         }
     }
 }

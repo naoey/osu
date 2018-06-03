@@ -18,8 +18,10 @@ namespace osu.Game.Overlays.Profile.Sections
         {
             Children = new Drawable[]
             {
+                new PlayHistoryRow(User),
                 new PaginatedMostPlayedBeatmapContainer(User),
                 new PaginatedScoreContainer(ScoreType.Recent, User, "Recent Plays (24h)", "No performance records. :("),
+                new ReplayWatchedHistoryRow(User),
             };
         }
     }
