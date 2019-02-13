@@ -33,7 +33,7 @@ namespace osu.Game.Online.API.Requests.Responses
             set => User = value;
         }
 
-        [JsonProperty(@"score_id")]
+        [JsonProperty(@"id")]
         private long onlineScoreID
         {
             set => OnlineScoreID = value;

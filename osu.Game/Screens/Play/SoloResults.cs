@@ -46,6 +46,13 @@ namespace osu.Game.Screens.Play
         private void onReplay()
         {
             ValidForResume = false;
+
+            if (Score is APIScoreInfo)
+            {
+                this.Push(new ReplayDownloadPlayerLoader(Score));
+                return;
+            }
+
             this.Push(new PlayerLoader(() => new ReplayPlayer(scores.GetScore(Score))));
         }
 

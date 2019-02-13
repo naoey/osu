@@ -88,7 +88,11 @@ namespace osu.Game.Screens.Play
             loadNewPlayer();
         }
 
-        private void playerLoaded(Player player) => info.Loading = false;
+        private void playerLoaded(Player player)
+        {
+            this.player = player;
+            info.Loading = false;
+        }
 
         public override void OnResuming(IScreen last)
         {
@@ -104,15 +108,20 @@ namespace osu.Game.Screens.Play
             this.Delay(400).Schedule(pushWhenLoaded);
         }
 
+        protected virtual Task CreatePlayerLoadTask(int restartCount, Action<Player> onLoaded)
+        {
+            var p = createPlayer();
+            p.RestartCount = restartCount;
+            p.RestartRequested = restartRequested;
+
+            return LoadComponentAsync(p, onLoaded);
+        }
+
         private void loadNewPlayer()
         {
             var restartCount = player?.RestartCount + 1 ?? 0;
 
-            player = createPlayer();
-            player.RestartCount = restartCount;
-            player.RestartRequested = restartRequested;
-
-            loadTask = LoadComponentAsync(player, playerLoaded);
+            loadTask = CreatePlayerLoadTask(restartCount, playerLoaded);
         }
 
         private void contentIn()
@@ -153,7 +162,7 @@ namespace osu.Game.Screens.Play
         private ScheduledDelegate pushDebounce;
         protected VisualSettings VisualSettings;
 
-        private bool readyForPush => player.LoadState == LoadState.Ready && IsHovered && GetContainingInputManager()?.DraggedDrawable == null;
+        private bool readyForPush => player?.LoadState == LoadState.Ready && IsHovered && GetContainingInputManager()?.DraggedDrawable == null;
 
         protected override bool OnHover(HoverEvent e)
         {
@@ -261,7 +270,7 @@ namespace osu.Game.Screens.Play
             if (isDisposing)
             {
                 // if the player never got pushed, we should explicitly dispose it.
-                loadTask?.ContinueWith(_ => player.Dispose());
+                loadTask?.ContinueWith(_ => player?.Dispose());
             }
         }
 
