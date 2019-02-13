@@ -39,11 +39,11 @@ namespace osu.Game.Screens.Play
         {
             return Task.Factory.StartNew(() =>
             {
-                var req = new DownloadReplayRequest(score);
-
-                req.Success += file =>
+                try
                 {
-                    try
+                    var req = new DownloadReplayRequest(score);
+
+                    req.Success += file =>
                     {
                         using (var stream = new FileStream(file, FileMode.Open))
                         {
@@ -53,25 +53,30 @@ namespace osu.Game.Screens.Play
                                 Replay = new DatabasedLegacyScoreParser(rulesets, beatmaps).Parse(stream).Replay,
                             };
 
-                            var p = new ReplayPlayer(replayScore);
+                            var p = new ReplayPlayer(replayScore)
+                            {
+                                AllowResults = false,
+                            };
+
+                            Beatmap.Value.Mods.Value = score.Mods;
 
                             LoadComponentAsync(p, onLoaded);
                         }
-                    }
-                    catch (Exception e)
+                    };
+
+                    req.Failure += e =>
                     {
                         this.Exit();
-                        Logger.Error(e, "Failed to download the replay!");
-                    }
-                };
+                        Logger.Error(e, @"Couldn't download the replay!");
+                    };
 
-                req.Failure += e =>
+                    req.Perform(api);
+                }
+                catch (Exception e)
                 {
                     this.Exit();
                     Logger.Error(e, @"Couldn't download the replay!");
-                };
-
-                req.Perform(api);
+                }
             });
         }
     }

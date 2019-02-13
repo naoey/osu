@@ -288,7 +288,11 @@ namespace osu.Game.Screens.Play
 
             ValidForResume = false;
 
-            if (!AllowResults) return;
+            if (!AllowResults)
+            {
+                this.Exit();
+                return;
+            }
 
             using (BeginDelayedSequence(1000))
             {

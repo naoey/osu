@@ -8,6 +8,7 @@ using osu.Framework.Graphics;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
 using osu.Game.Screens.Ranking;
 using osu.Game.Screens.Ranking.Types;
@@ -45,8 +46,6 @@ namespace osu.Game.Screens.Play
 
         private void onReplay()
         {
-            ValidForResume = false;
-
             if (Score is APIScoreInfo)
             {
                 this.Push(new ReplayDownloadPlayerLoader(Score));
