@@ -44,8 +44,21 @@ namespace osu.Game.Screens.Play
             }
         }
 
+        public override void OnResuming(IScreen last)
+        {
+            base.OnResuming(last);
+
+            Beatmap.Value.Mods.Value = previousMods;
+
+            previousMods = null;
+        }
+
+        private IEnumerable<Mod> previousMods;
+
         private void onReplay()
         {
+            previousMods = Beatmap.Value.Mods.Value;
+
             if (Score is APIScoreInfo)
             {
                 this.Push(new ReplayDownloadPlayerLoader(Score));

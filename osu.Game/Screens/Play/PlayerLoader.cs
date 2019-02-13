@@ -125,6 +125,8 @@ namespace osu.Game.Screens.Play
 
         private void loadNewPlayer()
         {
+            player = null;
+
             var restartCount = player?.RestartCount + 1 ?? 0;
 
             loadTask = CreatePlayerLoadTask(restartCount, playerLoaded);
