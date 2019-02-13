@@ -64,6 +64,9 @@ namespace osu.Game.Online.API.Requests.Responses
             }
         }
 
+        [JsonProperty(@"replay")]
+        public bool Replay;
+
         [JsonProperty(@"statistics")]
         private Dictionary<string, int> jsonStats
         {
