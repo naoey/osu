@@ -90,6 +90,12 @@ namespace osu.Game.Screens.Play
 
         private void playerLoaded(Player player)
         {
+            if (IsDisposed)
+            {
+                player.Dispose();
+                return;
+            }
+
             this.player = player;
             info.Loading = false;
         }
