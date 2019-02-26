@@ -59,6 +59,8 @@ namespace osu.Game.Screens.Play
         {
             previousMods = Beatmap.Value.Mods.Value;
 
+            Beatmap.Value.Mods.Value = Score.Mods;
+
             if (Score is APIScoreInfo)
             {
                 this.Push(new ReplayDownloadPlayerLoader(Score));

@@ -35,49 +35,44 @@ namespace osu.Game.Screens.Play
             this.score = score;
         }
 
-        protected override Task CreatePlayerLoadTask(int restartCount, Action<Player> onLoaded)
+        protected override void LoadNewPlayer(int restartCount, Action<Player> onLoaded)
         {
-            return Task.Factory.StartNew(() =>
+            try
             {
-                try
+                var req = new DownloadReplayRequest(score);
+
+                req.Success += file =>
                 {
-                    var req = new DownloadReplayRequest(score);
-
-                    req.Success += file =>
+                    using (var stream = new FileStream(file, FileMode.Open))
                     {
-                        using (var stream = new FileStream(file, FileMode.Open))
+                        var replayScore = new Score
                         {
-                            var replayScore = new Score
-                            {
-                                ScoreInfo = score,
-                                Replay = new DatabasedLegacyScoreParser(rulesets, beatmaps).Parse(stream).Replay,
-                            };
+                            ScoreInfo = score,
+                            Replay = new DatabasedLegacyScoreParser(rulesets, beatmaps).Parse(stream).Replay,
+                        };
 
-                            var p = new ReplayPlayer(replayScore)
-                            {
-                                AllowResults = false,
-                            };
+                        var p = new ReplayPlayer(replayScore)
+                        {
+                            AllowResults = false,
+                        };
 
-                            Beatmap.Value.Mods.Value = score.Mods;
+                        LoadComponentAsync(p, onLoaded);
+                    }
+                };
 
-                            LoadComponentAsync(p, onLoaded);
-                        }
-                    };
-
-                    req.Failure += e =>
-                    {
-                        this.Exit();
-                        Logger.Error(e, @"Couldn't download the replay!");
-                    };
-
-                    req.Perform(api);
-                }
-                catch (Exception e)
+                req.Failure += e =>
                 {
                     this.Exit();
-                    Logger.Error(e, @"Couldn't download the replay!");
-                }
-            });
+                    Logger.Error(e, @"Replay download failed!");
+                };
+
+                req.Perform(api);
+            }
+            catch (Exception e)
+            {
+                this.Exit();
+                Logger.Error(e, @"Replay download failed!");
+            }
         }
     }
 }

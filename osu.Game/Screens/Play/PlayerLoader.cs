@@ -39,8 +39,6 @@ namespace osu.Game.Screens.Play
 
         public override bool DisallowExternalBeatmapRulesetChanges => true;
 
-        private Task loadTask;
-
         public PlayerLoader(Func<Player> createPlayer)
         {
             this.createPlayer = createPlayer;
@@ -84,6 +82,11 @@ namespace osu.Game.Screens.Play
                     }
                 }
             };
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
 
             loadNewPlayer();
         }
@@ -92,6 +95,8 @@ namespace osu.Game.Screens.Play
         {
             if (IsDisposed)
             {
+                // if loading is completing after the player loader has been disposed, we need to explicitly dispose the player since
+                // it is never going to be pushed
                 player.Dispose();
                 return;
             }
@@ -114,13 +119,13 @@ namespace osu.Game.Screens.Play
             this.Delay(400).Schedule(pushWhenLoaded);
         }
 
-        protected virtual Task CreatePlayerLoadTask(int restartCount, Action<Player> onLoaded)
+        protected virtual void LoadNewPlayer(int restartCount, Action<Player> onLoaded)
         {
             var p = createPlayer();
             p.RestartCount = restartCount;
             p.RestartRequested = restartRequested;
 
-            return LoadComponentAsync(p, onLoaded);
+            LoadComponentAsync(p, onLoaded);
         }
 
         private void loadNewPlayer()
@@ -129,7 +134,7 @@ namespace osu.Game.Screens.Play
 
             var restartCount = player?.RestartCount + 1 ?? 0;
 
-            loadTask = CreatePlayerLoadTask(restartCount, playerLoaded);
+            LoadNewPlayer(restartCount, playerLoaded);
         }
 
         private void contentIn()
@@ -229,8 +234,6 @@ namespace osu.Game.Screens.Play
                     {
                         if (!this.IsCurrentScreen()) return;
 
-                        loadTask = null;
-
                         //By default, we want to load the player and never be returned to.
                         //Note that this may change if the player we load requested a re-run.
                         ValidForResume = false;
@@ -269,17 +272,6 @@ namespace osu.Game.Screens.Play
             Background.EnableUserDim.Value = false;
 
             return base.OnExiting(next);
-        }
-
-        protected override void Dispose(bool isDisposing)
-        {
-            base.Dispose(isDisposing);
-
-            if (isDisposing)
-            {
-                // if the player never got pushed, we should explicitly dispose it.
-                loadTask?.ContinueWith(_ => player?.Dispose());
-            }
         }
 
         private class BeatmapMetadataDisplay : Container
