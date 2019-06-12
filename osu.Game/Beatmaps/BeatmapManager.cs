@@ -259,6 +259,8 @@ namespace osu.Game.Beatmaps
             };
         }
 
+        public override bool IsAvailableLocally(BeatmapSetInfo set) => beatmaps.ConsumableItems.Any(b => b.OnlineBeatmapSetID == set.OnlineBeatmapSetID && !b.DeletePending && !b.Protected);
+
         /// <summary>
         /// Create all required <see cref="BeatmapInfo"/>s for the provided archive.
         /// </summary>

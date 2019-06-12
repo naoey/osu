@@ -77,9 +77,9 @@ namespace osu.Game.Online
 
         #endregion
 
-        private ArchiveDownloadModelRequest<TModel> attachedRequest;
+        private ArchiveDownloadRequest<TModel> attachedRequest;
 
-        private void attachDownload(ArchiveDownloadModelRequest<TModel> request)
+        private void attachDownload(ArchiveDownloadRequest<TModel> request)
         {
             if (attachedRequest != null)
             {
