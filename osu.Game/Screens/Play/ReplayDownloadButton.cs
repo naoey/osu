@@ -1,4 +1,5 @@
-﻿using osu.Framework.Allocation;
+﻿using osu.Framework.Graphics;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics.Sprites;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
@@ -18,6 +19,7 @@ namespace osu.Game.Screens.Play
         public ReplayDownloadButton(ScoreInfo score)
             : base(score)
         {
+            AutoSizeAxes = Axes.Both;
         }
 
         [BackgroundDependencyLoader]
@@ -46,7 +48,8 @@ namespace osu.Game.Screens.Play
             scores.ItemAdded += (score, _) =>
             {
                 if (score.Equals(ModelInfo.Value))
-                    game.PresentScore(ModelInfo.Value);
+                    // use the newly added score instead of ModelInfo.Score because that won't have the Files property populated
+                    game.PresentScore(score);
             };
         }
     }

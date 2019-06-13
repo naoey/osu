@@ -29,8 +29,6 @@ namespace osu.Game.Screens.Play
                 {
                     Anchor = Framework.Graphics.Anchor.BottomRight,
                     Origin = Framework.Graphics.Anchor.BottomRight,
-                    Height = 80,
-                    Width = 100,
                 });
             }
         }

@@ -7,6 +7,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Scoring;
 using osu.Game.Skinning;
 
 namespace osu.Game.Overlays.Settings.Sections.Maintenance
@@ -21,9 +22,10 @@ namespace osu.Game.Overlays.Settings.Sections.Maintenance
         private TriangleButton deleteBeatmapsButton;
         private TriangleButton restoreButton;
         private TriangleButton undeleteButton;
+        private TriangleButton deleteLocalScoresButton;
 
         [BackgroundDependencyLoader]
-        private void load(BeatmapManager beatmaps, SkinManager skins, DialogOverlay dialogOverlay)
+        private void load(BeatmapManager beatmaps, SkinManager skins, DialogOverlay dialogOverlay, ScoreManager scores)
         {
             if (beatmaps.SupportsImportFromStable)
             {
@@ -47,6 +49,19 @@ namespace osu.Game.Overlays.Settings.Sections.Maintenance
                     {
                         deleteBeatmapsButton.Enabled.Value = false;
                         Task.Run(() => beatmaps.Delete(beatmaps.GetAllUsableBeatmapSets())).ContinueWith(t => Schedule(() => deleteBeatmapsButton.Enabled.Value = true));
+                    }));
+                }
+            });
+
+            Add(deleteLocalScoresButton = new DangerousSettingsButton
+            {
+                Text = "Delete ALL local scores",
+                Action = () =>
+                {
+                    dialogOverlay?.Push(new DeleteAllBeatmapsDialog(() =>
+                    {
+                        deleteLocalScoresButton.Enabled.Value = false;
+                        Task.Run(() => scores.Delete(scores.GetAllUsableScores())).ContinueWith(t => Schedule(() => deleteLocalScoresButton.Enabled.Value = true));
                     }));
                 }
             });
