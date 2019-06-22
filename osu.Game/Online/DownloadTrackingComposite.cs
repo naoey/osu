@@ -17,9 +17,9 @@ namespace osu.Game.Online
         where TModel : class, IEquatable<TModel>
         where TModelManager : class, IModelDownloader<TModel>
     {
-        protected readonly Bindable<TModel> ModelInfo = new Bindable<TModel>();
-
         private TModelManager manager;
+
+        protected readonly Bindable<TModel> ModelInfo = new Bindable<TModel>();
 
         /// <summary>
         /// Holds the current download state of the beatmap, whether is has already been downloaded, is in progress, or is not downloaded.
@@ -50,7 +50,7 @@ namespace osu.Game.Online
 
             manager.DownloadBegan += download =>
             {
-                if (download.Info.Equals(ModelInfo.Value))
+                if (download.Model.Equals(ModelInfo.Value))
                     attachDownload(download);
             };
 
