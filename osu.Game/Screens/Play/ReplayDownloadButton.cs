@@ -36,7 +36,7 @@ namespace osu.Game.Screens.Play
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load(OsuGame game, ScoreManager scores)
+        private void load(OsuGame game, ScoreManager scores, SoloResults results)
         {
             InternalChild = shakeContainer = new ShakeContainer
             {
@@ -52,7 +52,7 @@ namespace osu.Game.Screens.Play
                 switch (State.Value)
                 {
                     case DownloadState.LocallyAvailable:
-                        game?.PresentScore(Model.Value);
+                        results?.PresentReplay();
                         break;
 
                     case DownloadState.NotDownloaded:

@@ -257,36 +257,12 @@ namespace osu.Game
         }
 
         /// <summary>
-        /// Present a score's replay immediately.
+        /// Present a score's results immediately.
         /// The user should have already requested this interactively.
         /// </summary>
         public void PresentScore(ScoreInfo score)
         {
-            // The given ScoreInfo may have missing properties if it was retrieved from online data. Re-retrieve it from the database
-            // to ensure all the required data for presenting a replay are present.
-            var databasedScoreInfo = ScoreManager.Query(s => s.OnlineScoreID == score.OnlineScoreID);
-            var databasedScore = ScoreManager.GetScore(databasedScoreInfo);
-
-            if (databasedScore.Replay == null)
-            {
-                Logger.Log("The loaded score has no replay data.", LoggingTarget.Information);
-                return;
-            }
-
-            var databasedBeatmap = BeatmapManager.QueryBeatmap(b => b.ID == databasedScoreInfo.Beatmap.ID);
-
-            if (databasedBeatmap == null)
-            {
-                Logger.Log("Tried to load a score for a beatmap we don't have!", LoggingTarget.Information);
-                return;
-            }
-
-            performFromMainMenu(() =>
-            {
-                Beatmap.Value = BeatmapManager.GetWorkingBeatmap(databasedBeatmap);
-
-                menuScreen.Push(new ReplayPlayerLoader(databasedScore));
-            }, $"watch {databasedScoreInfo}", bypassScreenAllowChecks: true);
+            performFromMainMenu(() => menuScreen.Push(new SoloResults(score)), $"show {score}", bypassScreenAllowChecks: true);
         }
 
         #region Beatmap jukebox progression
